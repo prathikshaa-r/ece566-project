@@ -99,7 +99,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT)
+am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT) cacheHelp.c cacheHelp.h
 cachefs_OBJECTS = $(am_cachefs_OBJECTS)
 cachefs_LDADD = $(LDADD)
 cachefs_DEPENDENCIES =
@@ -254,7 +254,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-cachefs_SOURCES = cachefs.c log.c log.h  params.h
+cachefs_SOURCES = cachefs.c log.c log.h params.h cacheHelp.c cacheHelp.h
 AM_CFLAGS = @FUSE_CFLAGS@
 LDADD = @FUSE_LIBS@
 all: config.h

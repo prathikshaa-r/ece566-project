@@ -67,13 +67,14 @@ cachefs.o: cachefs.c /usr/include/stdc-predef.h config.h params.h \
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib.h /usr/include/string.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h \
+ /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
  /usr/include/unistd.h /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
  /usr/include/x86_64-linux-gnu/bits/unistd.h \
- /usr/include/x86_64-linux-gnu/sys/xattr.h log.h
+ /usr/include/x86_64-linux-gnu/sys/xattr.h log.h cacheHelp.h
 
 /usr/include/stdc-predef.h:
 
@@ -249,6 +250,8 @@ params.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdlib.h:
 
+/usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h:
+
 /usr/include/string.h:
 
 /usr/include/x86_64-linux-gnu/bits/string_fortified.h:
@@ -266,3 +269,5 @@ params.h:
 /usr/include/x86_64-linux-gnu/sys/xattr.h:
 
 log.h:
+
+cacheHelp.h:

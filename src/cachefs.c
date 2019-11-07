@@ -19,7 +19,7 @@
   filesystem semantics on top of any other existing structure.  It
   simply reports the requests that come in, and passes them to an
   underlying filesystem.  The information is saved in a logfile named
-  bbfs.log, in the directory from which you run bbfs.
+  cfsfs.log, in the directory from which you run cfsfs.
 */
 #include "config.h"
 #include "params.h"
@@ -33,6 +33,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -42,29 +43,21 @@
 #endif
 
 #include "log.h"
+#include "cacheHelp.h"
 
-// start - cachefs secret
-// starts_with function to check if string starts with substring
-int starts_with(char *str, char *substr) {
-  if (strncmp(str, substr, strlen(substr)) == 0)
-    return 1;
-  else
-    return 0;
-}
-// end - cachefs secret
 
 //  All the paths I see are relative to the root of the mounted
 //  filesystem.  In order to get to the underlying filesystem, I need to
 //  have the mountpoint.  I'll save it away early on in main(), and then
 //  whenever I need a path for something I'll call this to construct
 //  it.
-static void bb_fullpath(char fpath[PATH_MAX], const char *path) {
-  strcpy(fpath, BB_DATA->rootdir);
+static void cfs_fullpath(char fpath[PATH_MAX], const char *path) {
+  strcpy(fpath, CFS_DATA->nasdir);
   strncat(fpath, path, PATH_MAX); // ridiculously long paths will
                                   // break here
 
-  log_msg("    bb_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
-          BB_DATA->rootdir, path, fpath);
+  log_msg("    cfs_fullpath:  nasdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
+          CFS_DATA->nasdir, path, fpath);
 }
 
 ///////////////////////////////////////////////////////////
@@ -78,36 +71,34 @@ static void bb_fullpath(char fpath[PATH_MAX], const char *path) {
  * ignored.  The 'st_ino' field is ignored except if the 'use_ino'
  * mount option is given.
  */
-int bb_getattr(const char *path, struct stat *statbuf) {
+int cfs_getattr(const char *path, struct stat *statbuf) {
   int retstat = 0;
   char fpath[PATH_MAX];
 
-  // start - cachefs
-  if (strstr(path, "/buddy.txt") != NULL) { // path="/buddy.txt"
-    log_msg("****** get_attr on buddy.txt *******");
-    statbuf->st_mode = S_IFREG | 0444; // read only reg file
-    statbuf->st_nlink = 1;
-    statbuf->st_size = strlen("Hey, buddy!\n");
-    return retstat; // =0 for success
-  }
-  // end - cachefs
-
-  // start - cachefs secret
-  if (starts_with((char *)path + 1, "secret")) { // custom function
-    log_msg("#### Secret filename: %s.\n", path);
-    retstat = -ENOENT;
-    return retstat;
-  }
-  // end - twealfs secret
-
-  log_msg("\nbb_getattr(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_getattr(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
+  cfs_fullpath(fpath, path);
 
   retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
 
   log_stat(statbuf);
 
   return retstat;
+}
+
+time_t getTimestamp(const char *path)
+{
+  struct stat *statbuf = malloc(sizeof(struct stat));
+  int retstat = 0;
+  char fpath[PATH_MAX];
+
+  log_msg("\ncfs_getTimeStamp(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
+  cfs_fullpath(fpath, path);
+
+  retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
+
+  log_stat(statbuf);
+  
+  return statbuf->st_mtime;
 }
 
 /** Read the target of a symbolic link
@@ -120,15 +111,15 @@ int bb_getattr(const char *path, struct stat *statbuf) {
  */
 // Note the system readlink() will truncate and lose the terminating
 // null.  So, the size passed to to the system readlink() must be one
-// less than the size passed to bb_readlink()
-// bb_readlink() code by Bernardo F Costa (thanks!)
-int bb_readlink(const char *path, char *link, size_t size) {
+// less than the size passed to cfs_readlink()
+// cfs_readlink() code by Bernardo F Costa (thanks!)
+int cfs_readlink(const char *path, char *link, size_t size) {
   int retstat;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_readlink(path=\"%s\", link=\"%s\", size=%d)\n", path, link,
+  log_msg("\ncfs_readlink(path=\"%s\", link=\"%s\", size=%d)\n", path, link,
           size);
-  bb_fullpath(fpath, path);
+  cfs_fullpath(fpath, path);
 
   retstat = log_syscall("readlink", readlink(fpath, link, size - 1), 0);
   if (retstat >= 0) {
@@ -146,12 +137,12 @@ int bb_readlink(const char *path, char *link, size_t size) {
  * creation of all non-directory, non-symlink nodes.
  */
 // shouldn't that comment be "if" there is no.... ?
-int bb_mknod(const char *path, mode_t mode, dev_t dev) {
+int cfs_mknod(const char *path, mode_t mode, dev_t dev) {
   int retstat;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n", path, mode, dev);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n", path, mode, dev);
+  cfs_fullpath(fpath, path);
 
   // On Linux this could just be 'mknod(path, mode, dev)' but this
   // tries to be be more portable by honoring the quote in the Linux
@@ -172,31 +163,31 @@ int bb_mknod(const char *path, mode_t mode, dev_t dev) {
 }
 
 /** Create a directory */
-int bb_mkdir(const char *path, mode_t mode) {
+int cfs_mkdir(const char *path, mode_t mode) {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_mkdir(path=\"%s\", mode=0%3o)\n", path, mode);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_mkdir(path=\"%s\", mode=0%3o)\n", path, mode);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("mkdir", mkdir(fpath, mode), 0);
 }
 
 /** Remove a file */
-int bb_unlink(const char *path) {
+int cfs_unlink(const char *path) {
   char fpath[PATH_MAX];
 
-  log_msg("bb_unlink(path=\"%s\")\n", path);
-  bb_fullpath(fpath, path);
+  log_msg("cfs_unlink(path=\"%s\")\n", path);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("unlink", unlink(fpath), 0);
 }
 
 /** Remove a directory */
-int bb_rmdir(const char *path) {
+int cfs_rmdir(const char *path) {
   char fpath[PATH_MAX];
 
-  log_msg("bb_rmdir(path=\"%s\")\n", path);
-  bb_fullpath(fpath, path);
+  log_msg("cfs_rmdir(path=\"%s\")\n", path);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("rmdir", rmdir(fpath), 0);
 }
@@ -206,78 +197,78 @@ int bb_rmdir(const char *path) {
 // to the symlink() system call.  The 'path' is where the link points,
 // while the 'link' is the link itself.  So we need to leave the path
 // unaltered, but insert the link into the mounted directory.
-int bb_symlink(const char *path, const char *link) {
+int cfs_symlink(const char *path, const char *link) {
   char flink[PATH_MAX];
 
-  log_msg("\nbb_symlink(path=\"%s\", link=\"%s\")\n", path, link);
-  bb_fullpath(flink, link);
+  log_msg("\ncfs_symlink(path=\"%s\", link=\"%s\")\n", path, link);
+  cfs_fullpath(flink, link);
 
   return log_syscall("symlink", symlink(path, flink), 0);
 }
 
 /** Rename a file */
 // both path and newpath are fs-relative
-int bb_rename(const char *path, const char *newpath) {
+int cfs_rename(const char *path, const char *newpath) {
   char fpath[PATH_MAX];
   char fnewpath[PATH_MAX];
 
-  log_msg("\nbb_rename(fpath=\"%s\", newpath=\"%s\")\n", path, newpath);
-  bb_fullpath(fpath, path);
-  bb_fullpath(fnewpath, newpath);
+  log_msg("\ncfs_rename(fpath=\"%s\", newpath=\"%s\")\n", path, newpath);
+  cfs_fullpath(fpath, path);
+  cfs_fullpath(fnewpath, newpath);
 
   return log_syscall("rename", rename(fpath, fnewpath), 0);
 }
 
 /** Create a hard link to a file */
-int bb_link(const char *path, const char *newpath) {
+int cfs_link(const char *path, const char *newpath) {
   char fpath[PATH_MAX], fnewpath[PATH_MAX];
 
-  log_msg("\nbb_link(path=\"%s\", newpath=\"%s\")\n", path, newpath);
-  bb_fullpath(fpath, path);
-  bb_fullpath(fnewpath, newpath);
+  log_msg("\ncfs_link(path=\"%s\", newpath=\"%s\")\n", path, newpath);
+  cfs_fullpath(fpath, path);
+  cfs_fullpath(fnewpath, newpath);
 
   return log_syscall("link", link(fpath, fnewpath), 0);
 }
 
 /** Change the permission bits of a file */
-int bb_chmod(const char *path, mode_t mode) {
+int cfs_chmod(const char *path, mode_t mode) {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_chmod(fpath=\"%s\", mode=0%03o)\n", path, mode);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_chmod(fpath=\"%s\", mode=0%03o)\n", path, mode);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("chmod", chmod(fpath, mode), 0);
 }
 
 /** Change the owner and group of a file */
-int bb_chown(const char *path, uid_t uid, gid_t gid)
+int cfs_chown(const char *path, uid_t uid, gid_t gid)
 
 {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("chown", chown(fpath, uid, gid), 0);
 }
 
 /** Change the size of a file */
-int bb_truncate(const char *path, off_t newsize) {
+int cfs_truncate(const char *path, off_t newsize) {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_truncate(path=\"%s\", newsize=%lld)\n", path, newsize);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_truncate(path=\"%s\", newsize=%lld)\n", path, newsize);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("truncate", truncate(fpath, newsize), 0);
 }
 
 /** Change the access and/or modification times of a file */
 /* note -- I'll want to change this as soon as 2.6 is in debian testing */
-int bb_utime(const char *path, struct utimbuf *ubuf) {
+int cfs_utime(const char *path, struct utimbuf *ubuf) {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_utime(path=\"%s\", ubuf=0x%08x)\n", path, ubuf);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_utime(path=\"%s\", ubuf=0x%08x)\n", path, ubuf);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("utime", utime(fpath, ubuf), 0);
 }
@@ -292,28 +283,27 @@ int bb_utime(const char *path, struct utimbuf *ubuf) {
  *
  * Changed in version 2.2
  */
-int bb_open(const char *path, struct fuse_file_info *fi) {
+int cfs_open(const char *path, struct fuse_file_info *fi) {
   int retstat = 0;
   int fd;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n", path, fi);
-  bb_fullpath(fpath, path);
-
-  // start - cachefs
-  if (strstr(path, "/buddy.txt") != NULL) { // path="/buddy.txt"
-    log_msg("****** OPEN on buddy.txt *******");
-    if ((fi->flags & O_ACCMODE) != O_RDONLY) {
-      return -EACCES;
-    }
-    return retstat; // =0 for success
-  }
-  // end - cachefs
+  log_msg("\ncfs_open(path\"%s\", fi=0x%08x)\n", path, fi);
+  cfs_fullpath(fpath, path);
 
   // if the open call succeeds, my retstat is the file descriptor,
   // else it's -errno.  I'm making sure that in that case the saved
   // file descriptor is exactly -1.
   fd = log_syscall("open", open(fpath, fi->flags), 0);
+  time_t nasTimestamp = getTimestamp(fpath);
+  /*
+  if(presentInCache)//open cache file 
+  {
+    open(fpath, fi->flags)
+    time_t cacheTimestamp = getTimestamp(cache path);
+  }
+  */
+
   if (fd < 0)
     retstat = log_error("open");
 
@@ -340,31 +330,32 @@ int bb_open(const char *path, struct fuse_file_info *fi) {
 // can return with anything up to the amount of data requested. nor
 // with the fusexmp code which returns the amount of data also
 // returned by read.
-int bb_read(const char *path, char *buf, size_t size, off_t offset,
-            struct fuse_file_info *fi) {
+int cfs_read(const char *path, char *buf, size_t size, off_t offset,
+            struct fuse_file_info *fi) 
+{
   int retstat = 0;
 
+  log_msg("entering read\n");
+  off_t lowerOffset = alignLowerOffset(offset);//adapt offset to start at a block offset
+  off_t upperOffset = alignUpperOffset(offset+size);//adapt read to end at a block offset for caching whole blocks
+  size_t alignedSize = upperOffset - lowerOffset;//our new size from a block start offset to a block end offset  
+
+  char* cacheBuf = malloc(alignedSize*sizeof(char));
+
   log_msg(
-      "\nbb_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+      "\ncfs_read original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, buf, size, offset, fi);
+
+  log_msg(
+      "\ncfs_read aligned(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+      path, cacheBuf, alignedSize, lowerOffset, fi);
   // no need to get fpath on this one, since I work from fi->fh not the path
   log_fi(fi);
-  // start - cachefs
-  if (strstr(path, "/buddy.txt") != NULL) {
-    char *buddy_contents = "Hey, buddy!\n";
-    size_t len = strlen(buddy_contents);
-    if (offset < len) {
-      if (offset + size > len) {
-        size = len - offset;
-      }
-      memcpy(buf, buddy_contents + offset, size);
-      log_msg("****** read on buddy.txt *******");
-      return size;
-    } else
-      return 0;
-  }
-  // end - cachefs
-  return log_syscall("pread", pread(fi->fh, buf, size, offset), 0);
+
+  retstat = log_syscall("pread", pread(fi->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+  memcpy(buf, cacheBuf+offset-lowerOffset, size);//write to buffer the requested data (offset-lowerOffset will bump up cacheBuf to where the real data starts)
+
+  return retstat;
 }
 
 /** Write data to an open file
@@ -377,14 +368,18 @@ int bb_read(const char *path, char *buf, size_t size, off_t offset,
  */
 // As  with read(), the documentation above is inconsistent with the
 // documentation for the write() system call.
-int bb_write(const char *path, const char *buf, size_t size, off_t offset,
+int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
              struct fuse_file_info *fi) {
   int retstat = 0;
 
+  off_t lowerOffset = alignLowerOffset(offset);//adapt offset to start at a block offset
+  off_t upperOffset = alignUpperOffset(offset+size);//adapt read to end at a block offset for caching whole blocks
+  size_t alignedSize = upperOffset - lowerOffset;//our new size from a block start offset to a block end offset  
+
   log_msg(
-      "\nbb_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+      "\ncfs_write original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, buf, size, offset, fi);
-  // no need to get fpath on this one, since I work from fi->fh not the path
+
   log_fi(fi);
 
   return log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
@@ -397,12 +392,12 @@ int bb_write(const char *path, const char *buf, size_t size, off_t offset,
  * Replaced 'struct statfs' parameter with 'struct statvfs' in
  * version 2.5
  */
-int bb_statfs(const char *path, struct statvfs *statv) {
+int cfs_statfs(const char *path, struct statvfs *statv) {
   int retstat = 0;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_statfs(path=\"%s\", statv=0x%08x)\n", path, statv);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_statfs(path=\"%s\", statv=0x%08x)\n", path, statv);
+  cfs_fullpath(fpath, path);
 
   // get stats for underlying filesystem
   retstat = log_syscall("statvfs", statvfs(fpath, statv), 0);
@@ -435,9 +430,9 @@ int bb_statfs(const char *path, struct statvfs *statv) {
  *
  * Changed in version 2.2
  */
-// this is a no-op in BBFS.  It just logs the call and returns success
-int bb_flush(const char *path, struct fuse_file_info *fi) {
-  log_msg("\nbb_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
+// this is a no-op in CFSFS.  It just logs the call and returns success
+int cfs_flush(const char *path, struct fuse_file_info *fi) {
+  log_msg("\ncfs_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
   // no need to get fpath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
@@ -458,8 +453,8 @@ int bb_flush(const char *path, struct fuse_file_info *fi) {
  *
  * Changed in version 2.2
  */
-int bb_release(const char *path, struct fuse_file_info *fi) {
-  log_msg("\nbb_release(path=\"%s\", fi=0x%08x)\n", path, fi);
+int cfs_release(const char *path, struct fuse_file_info *fi) {
+  log_msg("\ncfs_release(path=\"%s\", fi=0x%08x)\n", path, fi);
   log_fi(fi);
 
   // We need to close the file.  Had we allocated any resources
@@ -474,8 +469,8 @@ int bb_release(const char *path, struct fuse_file_info *fi) {
  *
  * Changed in version 2.2
  */
-int bb_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
-  log_msg("\nbb_fsync(path=\"%s\", datasync=%d, fi=0x%08x)\n", path, datasync,
+int cfs_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
+  log_msg("\ncfs_fsync(path=\"%s\", datasync=%d, fi=0x%08x)\n", path, datasync,
           fi);
   log_fi(fi);
 
@@ -490,35 +485,35 @@ int bb_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
 
 #ifdef HAVE_SYS_XATTR_H
 /** Note that my implementations of the various xattr functions use
-    the 'l-' versions of the functions (eg bb_setxattr() calls
+    the 'l-' versions of the functions (eg cfs_setxattr() calls
     lsetxattr() not setxattr(), etc).  This is because it appears any
     symbolic links are resolved before the actual call takes place, so
     I only need to use the system-provided calls that don't follow
     them */
 
 /** Set extended attributes */
-int bb_setxattr(const char *path, const char *name, const char *value,
+int cfs_setxattr(const char *path, const char *name, const char *value,
                 size_t size, int flags) {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_setxattr(path=\"%s\", name=\"%s\", value=\"%s\", size=%d, "
+  log_msg("\ncfs_setxattr(path=\"%s\", name=\"%s\", value=\"%s\", size=%d, "
           "flags=0x%08x)\n",
           path, name, value, size, flags);
-  bb_fullpath(fpath, path);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("lsetxattr", lsetxattr(fpath, name, value, size, flags),
                      0);
 }
 
 /** Get extended attributes */
-int bb_getxattr(const char *path, const char *name, char *value, size_t size) {
+int cfs_getxattr(const char *path, const char *name, char *value, size_t size) {
   int retstat = 0;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_getxattr(path = \"%s\", name = \"%s\", value = 0x%08x, size = "
+  log_msg("\ncfs_getxattr(path = \"%s\", name = \"%s\", value = 0x%08x, size = "
           "%d)\n",
           path, name, value, size);
-  bb_fullpath(fpath, path);
+  cfs_fullpath(fpath, path);
 
   retstat = log_syscall("lgetxattr", lgetxattr(fpath, name, value, size), 0);
   if (retstat >= 0)
@@ -528,14 +523,14 @@ int bb_getxattr(const char *path, const char *name, char *value, size_t size) {
 }
 
 /** List extended attributes */
-int bb_listxattr(const char *path, char *list, size_t size) {
+int cfs_listxattr(const char *path, char *list, size_t size) {
   int retstat = 0;
   char fpath[PATH_MAX];
   char *ptr;
 
-  log_msg("\nbb_listxattr(path=\"%s\", list=0x%08x, size=%d)\n", path, list,
+  log_msg("\ncfs_listxattr(path=\"%s\", list=0x%08x, size=%d)\n", path, list,
           size);
-  bb_fullpath(fpath, path);
+  cfs_fullpath(fpath, path);
 
   retstat = log_syscall("llistxattr", llistxattr(fpath, list, size), 0);
   if (retstat >= 0) {
@@ -551,11 +546,11 @@ int bb_listxattr(const char *path, char *list, size_t size) {
 }
 
 /** Remove extended attributes */
-int bb_removexattr(const char *path, const char *name) {
+int cfs_removexattr(const char *path, const char *name) {
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_removexattr(path=\"%s\", name=\"%s\")\n", path, name);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_removexattr(path=\"%s\", name=\"%s\")\n", path, name);
+  cfs_fullpath(fpath, path);
 
   return log_syscall("lremovexattr", lremovexattr(fpath, name), 0);
 }
@@ -568,20 +563,20 @@ int bb_removexattr(const char *path, const char *name) {
  *
  * Introduced in version 2.3
  */
-int bb_opendir(const char *path, struct fuse_file_info *fi) {
+int cfs_opendir(const char *path, struct fuse_file_info *fi) {
   DIR *dp;
   int retstat = 0;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_opendir(path=\"%s\", fi=0x%08x)\n", path, fi);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_opendir(path=\"%s\", fi=0x%08x)\n", path, fi);
+  cfs_fullpath(fpath, path);
 
   // since opendir returns a pointer, takes some custom handling of
   // return status.
   dp = opendir(fpath);
   log_msg("    opendir returned 0x%p\n", dp);
   if (dp == NULL)
-    retstat = log_error("bb_opendir opendir");
+    retstat = log_error("cfs_opendir opendir");
 
   fi->fh = (intptr_t)dp;
 
@@ -612,13 +607,13 @@ int bb_opendir(const char *path, struct fuse_file_info *fi) {
  * Introduced in version 2.3
  */
 
-int bb_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+int cfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                off_t offset, struct fuse_file_info *fi) {
   int retstat = 0;
   DIR *dp;
   struct dirent *de;
 
-  log_msg("\nbb_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, "
+  log_msg("\ncfs_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, "
           "fi=0x%08x)\n",
           path, buf, filler, offset, fi);
   // once again, no need for fullpath -- but note that I need to cast fi->fh
@@ -631,7 +626,7 @@ int bb_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   de = readdir(dp);
   log_msg("    readdir returned 0x%p\n", de);
   if (de == 0) {
-    retstat = log_error("bb_readdir readdir");
+    retstat = log_error("cfs_readdir readdir");
     return retstat;
   }
 
@@ -640,26 +635,12 @@ int bb_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   // returns something non-zero.  The first case just means I've
   // read the whole directory; the second means the buffer is full.
   do {
-    // start - cachefs secret
-    if (starts_with(de->d_name, "secret")) { // custom function
-      log_msg("#### Secret filename: %s.\n", de->d_name);
-      continue;
-    }
-    // end - twealfs secret
     log_msg("calling filler with name %s\n", de->d_name);
     if (filler(buf, de->d_name, NULL, 0) != 0) {
-      log_msg("    ERROR bb_readdir filler:  buffer full");
+      log_msg("    ERROR cfs_readdir filler:  buffer full");
       return -ENOMEM;
     }
   } while ((de = readdir(dp)) != NULL);
-
-  // start - cachefs
-  log_msg("calling filler for *buddy.txt*.\n");
-  if (filler(buf, "buddy.txt", NULL, 0)) {
-    log_msg("    ERROR bb_readdir filler:  buffer full | buddy.txt");
-    return -ENOMEM;
-  }
-  // end - cachefs
 
   log_fi(fi);
 
@@ -670,10 +651,10 @@ int bb_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
  *
  * Introduced in version 2.3
  */
-int bb_releasedir(const char *path, struct fuse_file_info *fi) {
+int cfs_releasedir(const char *path, struct fuse_file_info *fi) {
   int retstat = 0;
 
-  log_msg("\nbb_releasedir(path=\"%s\", fi=0x%08x)\n", path, fi);
+  log_msg("\ncfs_releasedir(path=\"%s\", fi=0x%08x)\n", path, fi);
   log_fi(fi);
 
   closedir((DIR *)(uintptr_t)fi->fh);
@@ -690,10 +671,10 @@ int bb_releasedir(const char *path, struct fuse_file_info *fi) {
  */
 // when exactly is this called?  when a user calls fsync and it
 // happens to be a directory? ??? >>> I need to implement this...
-int bb_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
+int cfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
   int retstat = 0;
 
-  log_msg("\nbb_fsyncdir(path=\"%s\", datasync=%d, fi=0x%08x)\n", path,
+  log_msg("\ncfs_fsyncdir(path=\"%s\", datasync=%d, fi=0x%08x)\n", path,
           datasync, fi);
   log_fi(fi);
 
@@ -717,13 +698,13 @@ int bb_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
 // parameter coming in here, or else the fact should be documented
 // (and this might as well return void, as it did in older versions of
 // FUSE).
-void *bb_init(struct fuse_conn_info *conn) {
-  log_msg("\nbb_init()\n");
+void *cfs_init(struct fuse_conn_info *conn) {
+  log_msg("\ncfs_init()\n");
 
   log_conn(conn);
   log_fuse_context(fuse_get_context());
 
-  return BB_DATA;
+  return CFS_DATA;
 }
 
 /**
@@ -733,8 +714,8 @@ void *bb_init(struct fuse_conn_info *conn) {
  *
  * Introduced in version 2.3
  */
-void bb_destroy(void *userdata) {
-  log_msg("\nbb_destroy(userdata=0x%08x)\n", userdata);
+void cfs_destroy(void *userdata) {
+  log_msg("\ncfs_destroy(userdata=0x%08x)\n", userdata);
 }
 
 /**
@@ -748,17 +729,17 @@ void bb_destroy(void *userdata) {
  *
  * Introduced in version 2.5
  */
-int bb_access(const char *path, int mask) {
+int cfs_access(const char *path, int mask) {
   int retstat = 0;
   char fpath[PATH_MAX];
 
-  log_msg("\nbb_access(path=\"%s\", mask=0%o)\n", path, mask);
-  bb_fullpath(fpath, path);
+  log_msg("\ncfs_access(path=\"%s\", mask=0%o)\n", path, mask);
+  cfs_fullpath(fpath, path);
 
   retstat = access(fpath, mask);
 
   if (retstat < 0)
-    retstat = log_error("bb_access access");
+    retstat = log_error("cfs_access access");
 
   return retstat;
 }
@@ -790,16 +771,16 @@ int bb_access(const char *path, int mask) {
  *
  * Introduced in version 2.5
  */
-int bb_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
+int cfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
   int retstat = 0;
 
-  log_msg("\nbb_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n", path, offset,
+  log_msg("\ncfs_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n", path, offset,
           fi);
   log_fi(fi);
 
   retstat = ftruncate(fi->fh, offset);
   if (retstat < 0)
-    retstat = log_error("bb_ftruncate ftruncate");
+    retstat = log_error("cfs_ftruncate ftruncate");
 
   return retstat;
 }
@@ -816,29 +797,11 @@ int bb_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
  *
  * Introduced in version 2.5
  */
-int bb_fgetattr(const char *path, struct stat *statbuf,
+int cfs_fgetattr(const char *path, struct stat *statbuf,
                 struct fuse_file_info *fi) {
   int retstat = 0;
 
-  // start - cachefs
-  if (strstr(path, "/buddy.txt") != NULL) { // path="/buddy.txt"
-    log_msg("****** fgetattr on buddy.txt *******");
-    statbuf->st_mode = S_IFREG | 0444; // read only reg file
-    statbuf->st_nlink = 1;
-    statbuf->st_size = strlen("Hey, buddy!\n");
-    return retstat; // =0 for success
-  }
-  // end - cachefs
-
-  // start - cachefs secret
-  if (starts_with((char *)path + 1, "secret")) { // custom function
-    log_msg("#### Secret filename: %s.\n", path);
-    retstat = -ENOENT;
-    return retstat;
-  }
-  // end - cachefs secret
-
-  log_msg("\nbb_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n", path,
+  log_msg("\ncfs_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n", path,
           statbuf, fi);
   log_fi(fi);
 
@@ -847,71 +810,71 @@ int bb_fgetattr(const char *path, struct stat *statbuf,
   // special case of a path of "/", I need to do a getattr on the
   // underlying root directory instead of doing the fgetattr().
   if (!strcmp(path, "/"))
-    return bb_getattr(path, statbuf);
+    return cfs_getattr(path, statbuf);
 
   retstat = fstat(fi->fh, statbuf);
   if (retstat < 0)
-    retstat = log_error("bb_fgetattr fstat");
+    retstat = log_error("cfs_fgetattr fstat");
 
   log_stat(statbuf);
 
   return retstat;
 }
 
-struct fuse_operations bb_oper = {.getattr = bb_getattr,
-                                  .readlink = bb_readlink,
+struct fuse_operations cfs_oper = {.getattr = cfs_getattr,
+                                  .readlink = cfs_readlink,
                                   // no .getdir -- that's deprecated
                                   .getdir = NULL,
-                                  .mknod = bb_mknod,
-                                  .mkdir = bb_mkdir,
-                                  .unlink = bb_unlink,
-                                  .rmdir = bb_rmdir,
-                                  .symlink = bb_symlink,
-                                  .rename = bb_rename,
-                                  .link = bb_link,
-                                  .chmod = bb_chmod,
-                                  .chown = bb_chown,
-                                  .truncate = bb_truncate,
-                                  .utime = bb_utime,
-                                  .open = bb_open,
-                                  .read = bb_read,
-                                  .write = bb_write,
+                                  .mknod = cfs_mknod,
+                                  .mkdir = cfs_mkdir,
+                                  .unlink = cfs_unlink,
+                                  .rmdir = cfs_rmdir,
+                                  .symlink = cfs_symlink,
+                                  .rename = cfs_rename,
+                                  .link = cfs_link,
+                                  .chmod = cfs_chmod,
+                                  .chown = cfs_chown,
+                                  .truncate = cfs_truncate,
+                                  .utime = cfs_utime,
+                                  .open = cfs_open,
+                                  .read = cfs_read,
+                                  .write = cfs_write,
                                   /** Just a placeholder, don't set */ // huh???
-                                  .statfs = bb_statfs,
-                                  .flush = bb_flush,
-                                  .release = bb_release,
-                                  .fsync = bb_fsync,
+                                  .statfs = cfs_statfs,
+                                  .flush = cfs_flush,
+                                  .release = cfs_release,
+                                  .fsync = cfs_fsync,
 
 #ifdef HAVE_SYS_XATTR_H
-                                  .setxattr = bb_setxattr,
-                                  .getxattr = bb_getxattr,
-                                  .listxattr = bb_listxattr,
-                                  .removexattr = bb_removexattr,
+                                  .setxattr = cfs_setxattr,
+                                  .getxattr = cfs_getxattr,
+                                  .listxattr = cfs_listxattr,
+                                  .removexattr = cfs_removexattr,
 #endif
 
-                                  .opendir = bb_opendir,
-                                  .readdir = bb_readdir,
-                                  .releasedir = bb_releasedir,
-                                  .fsyncdir = bb_fsyncdir,
-                                  .init = bb_init,
-                                  .destroy = bb_destroy,
-                                  .access = bb_access,
-                                  .ftruncate = bb_ftruncate,
-                                  .fgetattr = bb_fgetattr};
+                                  .opendir = cfs_opendir,
+                                  .readdir = cfs_readdir,
+                                  .releasedir = cfs_releasedir,
+                                  .fsyncdir = cfs_fsyncdir,
+                                  .init = cfs_init,
+                                  .destroy = cfs_destroy,
+                                  .access = cfs_access,
+                                  .ftruncate = cfs_ftruncate,
+                                  .fgetattr = cfs_fgetattr};
 
-void bb_usage() {
-  fprintf(stderr, "usage:  bbfs [FUSE and mount options] rootDir mountPoint\n");
+void cfs_usage() {
+  fprintf(stderr, "usage:  cachesize blocksize nasDir mountDir cacheDir\n");
   abort();
 }
 
 int main(int argc, char *argv[]) {
   int fuse_stat;
-  struct bb_state *bb_data;
+  struct cfs_state *cfs_data;
 
-  // bbfs doesn't do any access checking on its own (the comment
+  // cfsfs doesn't do any access checking on its own (the comment
   // blocks in fuse.h mention some of the functions that need
   // accesses checked -- but note there are other functions, like
-  // chown(), that also need checking!).  Since running bbfs as root
+  // chown(), that also need checking!).  Since running cfsfs as root
   // will therefore open Metrodome-sized holes in the system
   // security, we'll check if root is trying to mount the filesystem
   // and refuse if it is.  The somewhat smaller hole of an ordinary
@@ -919,7 +882,7 @@ int main(int argc, char *argv[]) {
   // I don't want to parse the options string.
   if ((getuid() == 0) || (geteuid() == 0)) {
     fprintf(stderr,
-            "Running BBFS as root opens unnacceptable security holes\n");
+            "Running CFSFS as root opens unnacceptable security holes\n");
     return 1;
   }
 
@@ -932,27 +895,39 @@ int main(int argc, char *argv[]) {
   // start with a hyphen (this will break if you actually have a
   // rootpoint or mountpoint whose name starts with a hyphen, but so
   // will a zillion other programs)
-  if ((argc < 3) || (argv[argc - 2][0] == '-') || (argv[argc - 1][0] == '-'))
-    bb_usage();
+  if ((argc < 5)  || (argv[argc - 3][0] == '-')|| (argv[argc - 2][0] == '-') || (argv[argc - 1][0] == '-'))
+    cfs_usage();
 
-  bb_data = malloc(sizeof(struct bb_state));
-  if (bb_data == NULL) {
+  cfs_data = malloc(sizeof(struct cfs_state));
+  if (cfs_data == NULL) {
     perror("main calloc");
     abort();
   }
 
+  //cache size supplied as argv[argc-5], block size supplied as argv[argc-4]
+  cfs_data->nasdir = realpath(argv[argc - 3], NULL);//save our nas and cachefs directory paths early on
+  cfs_data->cachedir = realpath(argv[argc - 1], NULL);
+  sscanf(argv[argc-5], "%lu", &cache_size);//set our cache size in Kb
+  sscanf(argv[argc-4], "%lu", &block_size);//set our block size 
+  argv[argc - 5] = argv[argc - 2];//put mountdir in first non null argv entry
+  argv[argc - 4] = NULL;
+  argv[argc - 3] = NULL;
+  argv[argc - 2] = NULL;
+  argv[argc - 1] = NULL;
+  argc = 2;
+  fprintf(stderr, "Nas Path %s\n", cfs_data->nasdir);
+  fprintf(stderr, "Cache Path %s\n", cfs_data->cachedir);
+  fprintf(stderr, "New cache size (Kb): %lu\n", cache_size);
+  fprintf(stderr, "New block size (Bytes): %lu\n", block_size);
   // Pull the rootdir out of the argument list and save it in my
   // internal data
-  bb_data->rootdir = realpath(argv[argc - 2], NULL);
-  argv[argc - 2] = argv[argc - 1];
-  argv[argc - 1] = NULL;
-  argc--;
+  
 
-  bb_data->logfile = log_open();
+  cfs_data->logfile = log_open();
 
   // turn over control to fuse
   fprintf(stderr, "about to call fuse_main\n");
-  fuse_stat = fuse_main(argc, argv, &bb_oper, bb_data);
+  fuse_stat = fuse_main(argc, argv, &cfs_oper, cfs_data);
   fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
 
   return fuse_stat;
