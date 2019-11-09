@@ -11,70 +11,20 @@ cfs_init()
     max_background =  0
     congestion_threshold =  0
     context:
-    fuse = 67742800
+    fuse = 6720f880
     uid =  0
     gid =  0
     pid =  0
-    private_data = 67740260
-    logfile = 677422a0
+    private_data = 6720d260
+    logfile = 6720f320
     nasdir = /home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir
     umask = 00000
 
-cfs_getattr(path="/.git", statbuf=0x43edcc30)
-    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/.git", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/.git"
-    lstat returned -1
-    ERROR lstat: No such file or directory
-    si:
-    st_dev =  0
-    st_ino =  0
-    st_mode = 0 0
-    st_nlink =  0
-    st_uid =  0
-    st_gid =  0
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  0
-    st_blocks =  0
-    st_atime = 0x 00000000
-    st_mtime = 0x 00000000
-    st_ctime = 0x 00000000
-
-cfs_getattr(path="/.git", statbuf=0x436dbc30)
-    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/.git", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/.git"
-    lstat returned -1
-    ERROR lstat: No such file or directory
-    si:
-    st_dev =  0
-    st_ino =  0
-    st_mode = 0 0
-    st_nlink =  0
-    st_uid =  0
-    st_gid =  0
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  0
-    st_blocks =  0
-    st_atime = 0x 00000000
-    st_mtime = 0x 00000000
-    st_ctime = 0x 00000000
-
-cfs_opendir(path="/", fi=0x43edcc20)
-    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/"
-    opendir returned 0x0x7fd63c003010
-    fi:
-    flags = 0x 00018800
-    fh_old = 0x 00000000
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007fd63c003010
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/", statbuf=0x436dbc00)
+cfs_getattr(path="/", statbuf=0xcbffec00)
     cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/"
     lstat returned 0
     si:
-    st_dev =  51
+    st_dev =  50
     st_ino =  262809
     st_mode = 0 40775
     st_nlink =  2
@@ -84,30 +34,63 @@ cfs_getattr(path="/", statbuf=0x436dbc00)
     st_size =  4096
     st_blksize =  32768
     st_blocks =  8
-    st_atime = 0x 5dc491ab
+    st_atime = 0x 5dc5f794
     st_mtime = 0x 5dc48ebc
     st_ctime = 0x 5dc48ebc
 
-cfs_readdir(path="/", buf=0x3c002f90, filler=0x446f9d00, offset=0, fi=0x43edcc20)
-    readdir returned 0x0x7fd63c003040
+cfs_access(path="/", mask=01)
+    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/"
+
+cfs_opendir(path="/", fi=0xcbffec20)
+    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/"
+    opendir returned 0x0x7f21c4000e10
+    fi:
+    flags = 0x 00018800
+    fh_old = 0x 00000000
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f21c4000e10
+    lock_owner = 0x 0000000000000000
+
+cfs_getattr(path="/", statbuf=0xd0ab2c00)
+    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/"
+    lstat returned 0
+    si:
+    st_dev =  50
+    st_ino =  262809
+    st_mode = 0 40775
+    st_nlink =  2
+    st_uid =  1100998
+    st_gid =  110098
+    st_rdev =  0
+    st_size =  4096
+    st_blksize =  32768
+    st_blocks =  8
+    st_atime = 0x 5dc5f794
+    st_mtime = 0x 5dc48ebc
+    st_ctime = 0x 5dc48ebc
+
+cfs_readdir(path="/", buf=0xc4000d90, filler=0xd12cfd00, offset=0, fi=0xcbffec20)
+    readdir returned 0x0x7f21c4000e40
 calling filler with name .
 calling filler with name ..
 calling filler with name midiEncoder.c
 calling filler with name dog1.txt
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7fd63c003010
+    fh_old = 0x 7f21c4000e10
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007fd63c003010
+    fh = 0x 00007f21c4000e10
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/midiEncoder.c", statbuf=0x436dbc30)
+cfs_getattr(path="/midiEncoder.c", statbuf=0xd0ab2c30)
     cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/midiEncoder.c", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/midiEncoder.c"
     lstat returned 0
     si:
-    st_dev =  51
+    st_dev =  50
     st_ino =  262462
     st_mode = 0 100755
     st_nlink =  1
@@ -121,30 +104,11 @@ cfs_getattr(path="/midiEncoder.c", statbuf=0x436dbc30)
     st_mtime = 0x 5db4c64b
     st_ctime = 0x 5db4c64b
 
-cfs_getattr(path="/.gitignore", statbuf=0x43edcc30)
-    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/.gitignore", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/.gitignore"
-    lstat returned -1
-    ERROR lstat: No such file or directory
-    si:
-    st_dev =  0
-    st_ino =  0
-    st_mode = 0 0
-    st_nlink =  0
-    st_uid =  0
-    st_gid =  0
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  0
-    st_blocks =  0
-    st_atime = 0x 00000000
-    st_mtime = 0x 00000000
-    st_ctime = 0x 00000000
-
-cfs_getattr(path="/dog1.txt", statbuf=0x436dbc30)
+cfs_getattr(path="/dog1.txt", statbuf=0xcbffec30)
     cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/dog1.txt", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/dog1.txt"
     lstat returned 0
     si:
-    st_dev =  51
+    st_dev =  50
     st_ino =  262882
     st_mode = 0 100664
     st_nlink =  1
@@ -158,12 +122,32 @@ cfs_getattr(path="/dog1.txt", statbuf=0x436dbc30)
     st_mtime = 0x 5daa0766
     st_ctime = 0x 5daa0766
 
-cfs_releasedir(path="/", fi=0x436dbc30)
+cfs_releasedir(path="/", fi=0xcbffec30)
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7fd63c003010
+    fh_old = 0x 7f21c4000e10
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007fd63c003010
+    fh = 0x 00007f21c4000e10
     lock_owner = 0x 0000000000000000
+
+cfs_getattr(path="/", statbuf=0xd0ab2c00)
+    cfs_fullpath:  nasdir = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir", path = "/", fpath = "/home/wjb24/Duke/ECE566/Project/ece566-project/example/nasdir/"
+    lstat returned 0
+    si:
+    st_dev =  50
+    st_ino =  262809
+    st_mode = 0 40775
+    st_nlink =  2
+    st_uid =  1100998
+    st_gid =  110098
+    st_rdev =  0
+    st_size =  4096
+    st_blksize =  32768
+    st_blocks =  8
+    st_atime = 0x 5dc5f794
+    st_mtime = 0x 5dc48ebc
+    st_ctime = 0x 5dc48ebc
+
+cfs_destroy(userdata=0x6720d260)

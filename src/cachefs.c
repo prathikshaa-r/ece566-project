@@ -895,7 +895,7 @@ int main(int argc, char *argv[]) {
   // start with a hyphen (this will break if you actually have a
   // rootpoint or mountpoint whose name starts with a hyphen, but so
   // will a zillion other programs)
-  if ((argc < 5)  || (argv[argc - 3][0] == '-')|| (argv[argc - 2][0] == '-') || (argv[argc - 1][0] == '-'))
+  if ((argc < 6)  || (argv[argc - 3][0] == '-')|| (argv[argc - 2][0] == '-') || (argv[argc - 1][0] == '-'))
     cfs_usage();
 
   cfs_data = malloc(sizeof(struct cfs_state));
@@ -907,7 +907,44 @@ int main(int argc, char *argv[]) {
   //cache size supplied as argv[argc-5], block size supplied as argv[argc-4]
   cfs_data->nasdir = realpath(argv[argc - 3], NULL);//save our nas and cachefs directory paths early on
   cfs_data->cachedir = realpath(argv[argc - 1], NULL);
-  sscanf(argv[argc-5], "%lu", &cache_size);//set our cache size in Kb
+
+  //cache sizing
+  size_t userSize;
+  sscanf(argv[argc-5], "%lu", &userSize);//set our cache size in Kb
+  fprintf(stderr,"Supplied cache size: %lu\n", userSize);
+  struct statvfs *fsBuffer = malloc(sizeof(struct statvfs));
+  int statvfsRet = statvfs(cfs_data->cachedir, fsBuffer);
+  if(statvfsRet != 0)//error in statvfs
+  {
+    fprintf(stderr,"Warning, available cache space not found. Supplied size may be too large.\n");
+    cache_size = userSize;
+  }
+  else//check if available is greater than supplied, inform user
+  {
+    fprintf(stderr,"File system block size: %lu\n", fsBuffer->f_bsize);
+    fprintf(stderr,"File system available block count: %lu\n", fsBuffer->f_bavail);
+
+    double KBperBlock = ((double)(fsBuffer->f_bsize)/1024.0);
+    long unsigned fsAvailKb = (long unsigned)(KBperBlock*fsBuffer->f_bavail);
+    fprintf(stderr,"File system available cache space: %lu\n", fsAvailKb);
+
+    if(userSize > fsAvailKb-100 && fsAvailKb > 100)//allow 100 kB buffer space
+    {
+      fprintf(stderr,"Supplied cache size is too large. Cache size will be set to: %lu\n", fsAvailKb-100);
+      cache_size = fsAvailKb-100;
+    }
+    else if(userSize > fsAvailKb)//available space is not large enough for buffer space
+    {
+      fprintf(stderr,"Supplied cache size is too large. Cache size will be set to: %lu\n", fsAvailKb);
+      cache_size = fsAvailKb;
+    }
+    else//user supplied is fine 
+    {
+      fprintf(stderr,"Supplied cache size is accepted as it is below available space.\n");
+      cache_size = userSize;
+    }
+  }
+
   sscanf(argv[argc-4], "%lu", &block_size);//set our block size 
   argv[argc - 5] = argv[argc - 2];//put mountdir in first non null argv entry
   argv[argc - 4] = NULL;
