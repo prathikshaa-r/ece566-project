@@ -20,6 +20,11 @@
   simply reports the requests that come in, and passes them to an
   underlying filesystem.  The information is saved in a logfile named
   cfsfs.log, in the directory from which you run cfsfs.
+
+  Refernces:
+  pathToFileName - https://stackoverflow.com/questions/5457608/how-to-remove-the-character-at-a-given-index-from-a-string-in-c "Fabio Cabral"
+
+
 */
 #include "config.h"
 #include "params.h"
@@ -51,13 +56,37 @@
 //  have the mountpoint.  I'll save it away early on in main(), and then
 //  whenever I need a path for something I'll call this to construct
 //  it.
-static void cfs_fullpath(char fpath[PATH_MAX], const char *path) {
-  strcpy(fpath, CFS_DATA->nasdir);
-  strncat(fpath, path, PATH_MAX); // ridiculously long paths will
+static void cfs_fullNasPath(char nasPath[PATH_MAX], const char *path) {
+  strcpy(nasPath, CFS_DATA->nasdir);
+  strncat(nasPath, path, PATH_MAX); // ridiculously long paths will
                                   // break here
 
-  log_msg("    cfs_fullpath:  nasdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
-          CFS_DATA->nasdir, path, fpath);
+  log_msg("    cfs_fullNasPath:  nasdir = \"%s\", path = \"%s\", nasPath = \"%s\"\n",
+          CFS_DATA->nasdir, path, nasPath);
+}
+
+static void cfs_fullCachePath(char cachePath[PATH_MAX], const char *path) {
+  strcpy(cachePath, CFS_DATA->cachedir);
+  strncat(cachePath, path, PATH_MAX); // ridiculously long paths will
+                                  // break here
+
+  log_msg("    cfs_fullCachePath:  cachedir = \"%s\", path = \"%s\", cachePath = \"%s\"\n",
+          CFS_DATA->cachedir, path, cachePath);
+}
+
+static void cfs_pathToFileName(char pathFileName[PATH_MAX], const char *path) {
+  strcpy(pathFileName, path);
+
+  char *src, *dst;
+  for (src = dst = pathFileName; *src != '\0'; src++) 
+  {
+    *dst = *src;
+    if (*dst != '/' || src == pathFileName) dst++;
+  }
+  *dst = '\0';
+
+  log_msg("    cfs_pathToFileName: path = \"%s\", fileName = \"%s\"\n",
+          path, pathFileName);
 }
 
 ///////////////////////////////////////////////////////////
@@ -73,34 +102,65 @@ static void cfs_fullpath(char fpath[PATH_MAX], const char *path) {
  */
 int cfs_getattr(const char *path, struct stat *statbuf) {
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_getattr(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
+  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
 
   log_stat(statbuf);
 
   return retstat;
 }
 
-time_t getTimestamp(const char *path)
+time_t cfs_getTimestamp(const char *path)
 {
   struct stat *statbuf = malloc(sizeof(struct stat));
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_getTimeStamp(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  retstat = log_syscall("lstat", lstat(fpath, statbuf), 0);
+  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
 
   log_stat(statbuf);
   
   return statbuf->st_mtime;
 }
 
+mode_t cfs_getMode(const char *path)
+{
+  struct stat *statbuf = malloc(sizeof(struct stat));
+  int retstat = 0;
+  char nasPath[PATH_MAX];
+
+  log_msg("\ncfs_getMode(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
+  cfs_fullNasPath(nasPath, path);
+
+  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
+
+  log_stat(statbuf);
+  
+  return statbuf->st_mode;
+}
+
+dev_t cfs_getDev(const char *path)
+{
+  struct stat *statbuf = malloc(sizeof(struct stat));
+  int retstat = 0;
+  char nasPath[PATH_MAX];
+
+  log_msg("\ncfs_getDev(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
+  cfs_fullNasPath(nasPath, path);
+
+  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
+
+  log_stat(statbuf);
+  
+  return statbuf->st_rdev;
+}
 /** Read the target of a symbolic link
  *
  * The buffer should be filled with a null terminated string.  The
@@ -115,13 +175,13 @@ time_t getTimestamp(const char *path)
 // cfs_readlink() code by Bernardo F Costa (thanks!)
 int cfs_readlink(const char *path, char *link, size_t size) {
   int retstat;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_readlink(path=\"%s\", link=\"%s\", size=%d)\n", path, link,
           size);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  retstat = log_syscall("readlink", readlink(fpath, link, size - 1), 0);
+  retstat = log_syscall("readlink", readlink(nasPath, link, size - 1), 0);
   if (retstat >= 0) {
     link[retstat] = '\0';
     retstat = 0;
@@ -139,10 +199,10 @@ int cfs_readlink(const char *path, char *link, size_t size) {
 // shouldn't that comment be "if" there is no.... ?
 int cfs_mknod(const char *path, mode_t mode, dev_t dev) {
   int retstat;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n", path, mode, dev);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
   // On Linux this could just be 'mknod(path, mode, dev)' but this
   // tries to be be more portable by honoring the quote in the Linux
@@ -151,45 +211,45 @@ int cfs_mknod(const char *path, mode_t mode, dev_t dev) {
   // that.
   if (S_ISREG(mode)) {
     retstat =
-        log_syscall("open", open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode), 0);
+        log_syscall("open", open(nasPath, O_CREAT | O_EXCL | O_WRONLY, mode), 0);
     if (retstat >= 0)
       retstat = log_syscall("close", close(retstat), 0);
   } else if (S_ISFIFO(mode))
-    retstat = log_syscall("mkfifo", mkfifo(fpath, mode), 0);
+    retstat = log_syscall("mkfifo", mkfifo(nasPath, mode), 0);
   else
-    retstat = log_syscall("mknod", mknod(fpath, mode, dev), 0);
+    retstat = log_syscall("mknod", mknod(nasPath, mode, dev), 0);
 
   return retstat;
 }
 
 /** Create a directory */
 int cfs_mkdir(const char *path, mode_t mode) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_mkdir(path=\"%s\", mode=0%3o)\n", path, mode);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("mkdir", mkdir(fpath, mode), 0);
+  return log_syscall("mkdir", mkdir(nasPath, mode), 0);
 }
 
 /** Remove a file */
 int cfs_unlink(const char *path) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("cfs_unlink(path=\"%s\")\n", path);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("unlink", unlink(fpath), 0);
+  return log_syscall("unlink", unlink(nasPath), 0);
 }
 
 /** Remove a directory */
 int cfs_rmdir(const char *path) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("cfs_rmdir(path=\"%s\")\n", path);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("rmdir", rmdir(fpath), 0);
+  return log_syscall("rmdir", rmdir(nasPath), 0);
 }
 
 /** Create a symbolic link */
@@ -201,7 +261,7 @@ int cfs_symlink(const char *path, const char *link) {
   char flink[PATH_MAX];
 
   log_msg("\ncfs_symlink(path=\"%s\", link=\"%s\")\n", path, link);
-  cfs_fullpath(flink, link);
+  cfs_fullNasPath(flink, link);
 
   return log_syscall("symlink", symlink(path, flink), 0);
 }
@@ -209,68 +269,94 @@ int cfs_symlink(const char *path, const char *link) {
 /** Rename a file */
 // both path and newpath are fs-relative
 int cfs_rename(const char *path, const char *newpath) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
   char fnewpath[PATH_MAX];
 
-  log_msg("\ncfs_rename(fpath=\"%s\", newpath=\"%s\")\n", path, newpath);
-  cfs_fullpath(fpath, path);
-  cfs_fullpath(fnewpath, newpath);
+  log_msg("\ncfs_rename(nasPath=\"%s\", newpath=\"%s\")\n", path, newpath);
+  cfs_fullNasPath(nasPath, path);
+  cfs_fullNasPath(fnewpath, newpath);
 
-  return log_syscall("rename", rename(fpath, fnewpath), 0);
+  return log_syscall("rename", rename(nasPath, fnewpath), 0);
 }
 
 /** Create a hard link to a file */
 int cfs_link(const char *path, const char *newpath) {
-  char fpath[PATH_MAX], fnewpath[PATH_MAX];
+  char nasPath[PATH_MAX], fnewpath[PATH_MAX];
 
   log_msg("\ncfs_link(path=\"%s\", newpath=\"%s\")\n", path, newpath);
-  cfs_fullpath(fpath, path);
-  cfs_fullpath(fnewpath, newpath);
+  cfs_fullNasPath(nasPath, path);
+  cfs_fullNasPath(fnewpath, newpath);
 
-  return log_syscall("link", link(fpath, fnewpath), 0);
+  return log_syscall("link", link(nasPath, fnewpath), 0);
 }
 
 /** Change the permission bits of a file */
 int cfs_chmod(const char *path, mode_t mode) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
-  log_msg("\ncfs_chmod(fpath=\"%s\", mode=0%03o)\n", path, mode);
-  cfs_fullpath(fpath, path);
+  log_msg("\ncfs_chmod(nasPath=\"%s\", mode=0%03o)\n", path, mode);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("chmod", chmod(fpath, mode), 0);
+  return log_syscall("chmod", chmod(nasPath, mode), 0);
 }
 
 /** Change the owner and group of a file */
 int cfs_chown(const char *path, uid_t uid, gid_t gid)
 
 {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("chown", chown(fpath, uid, gid), 0);
+  return log_syscall("chown", chown(nasPath, uid, gid), 0);
 }
 
 /** Change the size of a file */
 int cfs_truncate(const char *path, off_t newsize) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_truncate(path=\"%s\", newsize=%lld)\n", path, newsize);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("truncate", truncate(fpath, newsize), 0);
+  return log_syscall("truncate", truncate(nasPath, newsize), 0);
 }
 
 /** Change the access and/or modification times of a file */
 /* note -- I'll want to change this as soon as 2.6 is in debian testing */
 int cfs_utime(const char *path, struct utimbuf *ubuf) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_utime(path=\"%s\", ubuf=0x%08x)\n", path, ubuf);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("utime", utime(fpath, ubuf), 0);
+  return log_syscall("utime", utime(nasPath, ubuf), 0);
+}
+
+
+//Make a node in the cache directory 
+int cfs_mkCacheNod(const char *cachePath, mode_t mode, dev_t dev) 
+{
+  int retstat;
+
+  log_msg("\ncfs_mkCacheNod(cachePath=\"%s\", mode=0%3o, dev=%lld)\n", cachePath, mode, dev);
+
+  // On Linux this could just be 'mknod(path, mode, dev)' but this
+  // tries to be be more portable by honoring the quote in the Linux
+  // mknod man page stating the only portable use of mknod() is to
+  // make a fifo, but saying it should never actually be used for
+  // that.
+  if (S_ISREG(mode)) {
+    retstat =
+        log_syscall("open", open(cachePath, O_CREAT | O_EXCL | O_WRONLY, mode), 0);
+    if (retstat >= 0)
+      retstat = log_syscall("close", close(retstat), 0);
+  } else if (S_ISFIFO(mode))
+    retstat = log_syscall("mkfifo", mkfifo(cachePath, mode), 0);
+  else
+    retstat = log_syscall("mknod", mknod(cachePath, mode, dev), 0);
+
+  return retstat;
 }
 
 /** File open operation
@@ -286,23 +372,29 @@ int cfs_utime(const char *path, struct utimbuf *ubuf) {
 int cfs_open(const char *path, struct fuse_file_info *fi) {
   int retstat = 0;
   int fd;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
+  char cachePath[PATH_MAX];
+  char cacheFileName[PATH_MAX];
 
-  log_msg("\ncfs_open(path\"%s\", fi=0x%08x)\n", path, fi);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
+  cfs_pathToFileName(cacheFileName, nasPath);//convert path into the name of the file in our cache by removing "\"
+  cfs_fullCachePath(cachePath, cacheFileName);
+
+  bool presentInCache = false;
+  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented 
+
+  if(!presentInCache)//create a new file in the cache dir 
+  {
+    mode_t myMode = cfs_getMode(path);
+    dev_t myDev = cfs_getDev(path);
+    cfs_mkCacheNod(cachePath, myMode, myDev);   
+  }
+  log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n", path, fi);
 
   // if the open call succeeds, my retstat is the file descriptor,
   // else it's -errno.  I'm making sure that in that case the saved
   // file descriptor is exactly -1.
-  fd = log_syscall("open", open(fpath, fi->flags), 0);
-  time_t nasTimestamp = getTimestamp(fpath);
-  /*
-  if(presentInCache)//open cache file 
-  {
-    open(fpath, fi->flags)
-    time_t cacheTimestamp = getTimestamp(cache path);
-  }
-  */
+  fd = log_syscall("open", open(nasPath, fi->flags), 0);
 
   if (fd < 0)
     retstat = log_error("open");
@@ -337,8 +429,13 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
 
   log_msg("entering read\n");
   off_t lowerOffset = alignLowerOffset(offset);//adapt offset to start at a block offset
-  off_t upperOffset = alignUpperOffset(offset+size);//adapt read to end at a block offset for caching whole blocks
-  size_t alignedSize = upperOffset - lowerOffset;//our new size from a block start offset to a block end offset  
+  size_t alignedSize = block_size*(size/block_size);//our new size from a block start offset to a block end offset  
+  if(size%block_size != 0) 
+  {
+    alignedSize = alignedSize + block_size;
+  }
+  off_t upperOffset = alignUpperOffset(offset+alignedSize);//adapt read to end at a block offset for caching whole blocks
+  
 
   char* cacheBuf = malloc(alignedSize*sizeof(char));
 
@@ -349,7 +446,7 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
   log_msg(
       "\ncfs_read aligned(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, cacheBuf, alignedSize, lowerOffset, fi);
-  // no need to get fpath on this one, since I work from fi->fh not the path
+  // no need to get nasPath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
   retstat = log_syscall("pread", pread(fi->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
@@ -394,13 +491,13 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
  */
 int cfs_statfs(const char *path, struct statvfs *statv) {
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_statfs(path=\"%s\", statv=0x%08x)\n", path, statv);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
   // get stats for underlying filesystem
-  retstat = log_syscall("statvfs", statvfs(fpath, statv), 0);
+  retstat = log_syscall("statvfs", statvfs(nasPath, statv), 0);
 
   log_statvfs(statv);
 
@@ -433,7 +530,7 @@ int cfs_statfs(const char *path, struct statvfs *statv) {
 // this is a no-op in CFSFS.  It just logs the call and returns success
 int cfs_flush(const char *path, struct fuse_file_info *fi) {
   log_msg("\ncfs_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
-  // no need to get fpath on this one, since I work from fi->fh not the path
+  // no need to get nasPath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
   return 0;
@@ -494,28 +591,28 @@ int cfs_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
 /** Set extended attributes */
 int cfs_setxattr(const char *path, const char *name, const char *value,
                 size_t size, int flags) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_setxattr(path=\"%s\", name=\"%s\", value=\"%s\", size=%d, "
           "flags=0x%08x)\n",
           path, name, value, size, flags);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("lsetxattr", lsetxattr(fpath, name, value, size, flags),
+  return log_syscall("lsetxattr", lsetxattr(nasPath, name, value, size, flags),
                      0);
 }
 
 /** Get extended attributes */
 int cfs_getxattr(const char *path, const char *name, char *value, size_t size) {
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_getxattr(path = \"%s\", name = \"%s\", value = 0x%08x, size = "
           "%d)\n",
           path, name, value, size);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  retstat = log_syscall("lgetxattr", lgetxattr(fpath, name, value, size), 0);
+  retstat = log_syscall("lgetxattr", lgetxattr(nasPath, name, value, size), 0);
   if (retstat >= 0)
     log_msg("    value = \"%s\"\n", value);
 
@@ -525,14 +622,14 @@ int cfs_getxattr(const char *path, const char *name, char *value, size_t size) {
 /** List extended attributes */
 int cfs_listxattr(const char *path, char *list, size_t size) {
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
   char *ptr;
 
   log_msg("\ncfs_listxattr(path=\"%s\", list=0x%08x, size=%d)\n", path, list,
           size);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  retstat = log_syscall("llistxattr", llistxattr(fpath, list, size), 0);
+  retstat = log_syscall("llistxattr", llistxattr(nasPath, list, size), 0);
   if (retstat >= 0) {
     log_msg("    returned attributes (length %d):\n", retstat);
     if (list != NULL)
@@ -547,12 +644,12 @@ int cfs_listxattr(const char *path, char *list, size_t size) {
 
 /** Remove extended attributes */
 int cfs_removexattr(const char *path, const char *name) {
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_removexattr(path=\"%s\", name=\"%s\")\n", path, name);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  return log_syscall("lremovexattr", lremovexattr(fpath, name), 0);
+  return log_syscall("lremovexattr", lremovexattr(nasPath, name), 0);
 }
 #endif
 
@@ -566,14 +663,14 @@ int cfs_removexattr(const char *path, const char *name) {
 int cfs_opendir(const char *path, struct fuse_file_info *fi) {
   DIR *dp;
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_opendir(path=\"%s\", fi=0x%08x)\n", path, fi);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
   // since opendir returns a pointer, takes some custom handling of
   // return status.
-  dp = opendir(fpath);
+  dp = opendir(nasPath);
   log_msg("    opendir returned 0x%p\n", dp);
   if (dp == NULL)
     retstat = log_error("cfs_opendir opendir");
@@ -616,7 +713,7 @@ int cfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   log_msg("\ncfs_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, "
           "fi=0x%08x)\n",
           path, buf, filler, offset, fi);
-  // once again, no need for fullpath -- but note that I need to cast fi->fh
+  // once again, no need for fullNasPath -- but note that I need to cast fi->fh
   dp = (DIR *)(uintptr_t)fi->fh;
 
   // Every directory contains at least two entries: . and ..  If my
@@ -731,12 +828,12 @@ void cfs_destroy(void *userdata) {
  */
 int cfs_access(const char *path, int mask) {
   int retstat = 0;
-  char fpath[PATH_MAX];
+  char nasPath[PATH_MAX];
 
   log_msg("\ncfs_access(path=\"%s\", mask=0%o)\n", path, mask);
-  cfs_fullpath(fpath, path);
+  cfs_fullNasPath(nasPath, path);
 
-  retstat = access(fpath, mask);
+  retstat = access(nasPath, mask);
 
   if (retstat < 0)
     retstat = log_error("cfs_access access");
