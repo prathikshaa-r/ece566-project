@@ -99,7 +99,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT) cacheHelp.c cacheHelp.h
+am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT) \
+	cacheHelp.$(OBJEXT)
 cachefs_OBJECTS = $(am_cachefs_OBJECTS)
 cachefs_LDADD = $(LDADD)
 cachefs_DEPENDENCIES =
@@ -359,6 +360,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cacheHelp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cachefs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
 

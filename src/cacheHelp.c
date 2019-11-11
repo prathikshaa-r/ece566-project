@@ -12,5 +12,3 @@ off_t alignUpperOffset(off_t offset)
   off_t alignedOffset = offset + offset%block_size;
   return alignedOffset;
 }
-
-

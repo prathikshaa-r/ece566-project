@@ -99,7 +99,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT) cacheHelp.c cacheHelp.h
+am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT) \
+	cacheHelp.$(OBJEXT)
 cachefs_OBJECTS = $(am_cachefs_OBJECTS)
 cachefs_LDADD = $(LDADD)
 cachefs_DEPENDENCIES =
@@ -161,12 +162,12 @@ CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing aclocal-1.15
+ACLOCAL = ${SHELL} /home/wjb24/ECE566/ece566-project/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing autoconf
-AUTOHEADER = ${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing autoheader
-AUTOMAKE = ${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing automake-1.15
+AUTOCONF = ${SHELL} /home/wjb24/ECE566/ece566-project/missing autoconf
+AUTOHEADER = ${SHELL} /home/wjb24/ECE566/ece566-project/missing autoheader
+AUTOMAKE = ${SHELL} /home/wjb24/ECE566/ece566-project/missing automake-1.15
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -190,10 +191,10 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
-LIBOBJS =  ${LIBOBJDIR}lstat$U.o
+LIBOBJS = 
 LIBS = 
-LTLIBOBJS =  ${LIBOBJDIR}lstat$U.lo
-MAKEINFO = ${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing makeinfo
+LTLIBOBJS = 
+MAKEINFO = ${SHELL} /home/wjb24/ECE566/ece566-project/missing makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = cachefs
@@ -211,10 +212,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = 
 VERSION = 2019-09-09
-abs_builddir = /home/wjb24/Duke/ECE566/Project/ece566-project/src
-abs_srcdir = /home/wjb24/Duke/ECE566/Project/ece566-project/src
-abs_top_builddir = /home/wjb24/Duke/ECE566/Project/ece566-project
-abs_top_srcdir = /home/wjb24/Duke/ECE566/Project/ece566-project
+abs_builddir = /home/wjb24/ECE566/ece566-project/src
+abs_srcdir = /home/wjb24/ECE566/ece566-project/src
+abs_top_builddir = /home/wjb24/ECE566/ece566-project
+abs_top_srcdir = /home/wjb24/ECE566/ece566-project
 ac_ct_CC = gcc
 am__include = include
 am__leading_dot = .
@@ -233,7 +234,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/install-sh
+install_sh = ${SHELL} /home/wjb24/ECE566/ece566-project/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -359,6 +360,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/cacheHelp.Po
 include ./$(DEPDIR)/cachefs.Po
 include ./$(DEPDIR)/log.Po
 

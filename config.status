@@ -437,7 +437,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/wjb24/Duke/ECE566/Project/ece566-project'
+ac_pwd='/home/wjb24/ECE566/ece566-project'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='/bin/mkdir -p'
@@ -618,8 +618,8 @@ echo 'BEGIN {' >"$ac_tmp/subs1.awk" &&
 cat >>"$ac_tmp/subs1.awk" <<\_ACAWK &&
 S["am__EXEEXT_FALSE"]=""
 S["am__EXEEXT_TRUE"]="#"
-S["LTLIBOBJS"]=" ${LIBOBJDIR}lstat$U.lo"
-S["LIBOBJS"]=" ${LIBOBJDIR}lstat$U.o"
+S["LTLIBOBJS"]=""
+S["LIBOBJS"]=""
 S["FUSE_LIBS"]="-lfuse -pthread"
 S["FUSE_CFLAGS"]="-D_FILE_OFFSET_BITS=64 -I/usr/include/fuse"
 S["PKG_CONFIG_LIBDIR"]=""
@@ -659,12 +659,12 @@ S["mkdir_p"]="$(MKDIR_P)"
 S["MKDIR_P"]="/bin/mkdir -p"
 S["INSTALL_STRIP_PROGRAM"]="$(install_sh) -c -s"
 S["STRIP"]=""
-S["install_sh"]="${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/install-sh"
-S["MAKEINFO"]="${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing makeinfo"
-S["AUTOHEADER"]="${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing autoheader"
-S["AUTOMAKE"]="${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing automake-1.15"
-S["AUTOCONF"]="${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing autoconf"
-S["ACLOCAL"]="${SHELL} /home/wjb24/Duke/ECE566/Project/ece566-project/missing aclocal-1.15"
+S["install_sh"]="${SHELL} /home/wjb24/ECE566/ece566-project/install-sh"
+S["MAKEINFO"]="${SHELL} /home/wjb24/ECE566/ece566-project/missing makeinfo"
+S["AUTOHEADER"]="${SHELL} /home/wjb24/ECE566/ece566-project/missing autoheader"
+S["AUTOMAKE"]="${SHELL} /home/wjb24/ECE566/ece566-project/missing automake-1.15"
+S["AUTOCONF"]="${SHELL} /home/wjb24/ECE566/ece566-project/missing autoconf"
+S["ACLOCAL"]="${SHELL} /home/wjb24/ECE566/ece566-project/missing aclocal-1.15"
 S["VERSION"]="2019-09-09"
 S["PACKAGE"]="cachefs"
 S["CYGPATH_W"]="echo"
@@ -784,6 +784,7 @@ D["HAVE_ST_BLOCKS"]=" 1"
 D["HAVE_STRUCT_STAT_ST_RDEV"]=" 1"
 D["HAVE_UNISTD_H"]=" 1"
 D["HAVE_CHOWN"]=" 1"
+D["LSTAT_FOLLOWS_SLASHED_SYMLINK"]=" 1"
 D["HAVE_STDLIB_H"]=" 1"
 D["HAVE_MALLOC"]=" 1"
 D["HAVE_FTRUNCATE"]=" 1"

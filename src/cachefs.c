@@ -78,7 +78,7 @@ static void cfs_pathToFileName(char pathFileName[PATH_MAX], const char *path) {
   strcpy(pathFileName, path);
 
   char *src, *dst;
-  for (src = dst = pathFileName; *src != '\0'; src++) 
+  for (src = dst = pathFileName; *src != '\0'; src++)
   {
     *dst = *src;
     if (*dst != '/' || src == pathFileName) dst++;
@@ -126,7 +126,7 @@ time_t cfs_getTimestamp(const char *path)
   retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
 
   log_stat(statbuf);
-  
+
   return statbuf->st_mtime;
 }
 
@@ -142,7 +142,7 @@ mode_t cfs_getMode(const char *path)
   retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
 
   log_stat(statbuf);
-  
+
   return statbuf->st_mode;
 }
 
@@ -158,7 +158,7 @@ dev_t cfs_getDev(const char *path)
   retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
 
   log_stat(statbuf);
-  
+
   return statbuf->st_rdev;
 }
 /** Read the target of a symbolic link
@@ -334,8 +334,8 @@ int cfs_utime(const char *path, struct utimbuf *ubuf) {
 }
 
 
-//Make a node in the cache directory 
-int cfs_mkCacheNod(const char *cachePath, mode_t mode, dev_t dev) 
+//Make a node in the cache directory
+int cfs_mkCacheNod(const char *cachePath, mode_t mode, dev_t dev)
 {
   int retstat;
 
@@ -378,27 +378,27 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   char cacheFileName[PATH_MAX];
 
   cfs_fullNasPath(nasPath, path);
-  cfs_pathToFileName(cacheFileName, nasPath);//convert path into the name of the file in our cache by removing "\"
+  cfs_pathToFileName(cacheFileName, path);//convert path into the name of the file in our cache by removing "\"
   cfs_fullCachePath(cachePath, cacheFileName);
 
   bool presentInCache = false;
-  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented 
+  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented
 
-  if(!presentInCache)//create a new file in the cache dir 
+  if(!presentInCache)//create a new file in the cache dir
   {
     log_msg("\nFile is not present yet in cache. Making nodes...\n");
     mode_t myMode = cfs_getMode(path);
     dev_t myDev = cfs_getDev(path);
-    cfs_mkCacheNod(cachePath, myMode, myDev);   
+    cfs_mkCacheNod(cachePath, myMode, myDev);
   }
   log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n", path, fi);
 
   //Make open calls to both the NAS and Cache
   //Return values are file descriptors for each file
   //fi and openCacheFile flags are passed to the open call
-  cacheFileDescriptor->flags = fi->flags;
-  nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0); 
-  cacheFileDescriptor = log_syscall("Cache open", open(cachePath, openCacheFile->flags), 0);
+  openCacheFile.flags = fi->flags;
+  nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);
+  cacheFileDescriptor = log_syscall("Cache open", open(cachePath, openCacheFile.flags), 0);
 
   // if the open call succeeds, my retstat is the file descriptor,
   // else it's -errno.  I'm making sure that in that case the saved
@@ -410,7 +410,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 
   //Set respective file handles for both the fuse_file_infos
   fi->fh = nasFileDescriptor;
-  openCacheFile->fh = cacheFileDescriptor;
+  openCacheFile.fh = cacheFileDescriptor;
 
   log_fi(fi);
 
@@ -419,19 +419,22 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 
 //Specifically write to cache
 //Need for reads so that future reads can be from cache
-//Also called by cfs_write when the file is in cache, has same function 
+//Also called by cfs_write when the file is in cache, has same function
 int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_t offset)
 {
   char cachePath[PATH_MAX];
   cfs_fullCachePath(cachePath, cacheFileName);
+  
+  int cacheFileDescriptor;
+  cacheFileDescriptor = log_syscall("Cache open", open(cachePath, openCacheFile.flags), 0);
 
   log_msg(
       "\ncfs_cacheWrite(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-      cachePath, buf, size, offset, fi);
+      cachePath, buf, size, offset, openCacheFile);
 
-  log_fi(openCacheFile);
+  log_fi(&openCacheFile);
 
-  return log_syscall("pwrite", pwrite(openCacheFile->fh, buf, size, offset), 0);
+  return log_syscall("pwrite", pwrite(openCacheFile.fh, buf, size, offset), 0);
 }
 
 /** Read data from an open file
@@ -451,7 +454,7 @@ int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_
 // with the fusexmp code which returns the amount of data also
 // returned by read.
 int cfs_read(const char *path, char *buf, size_t size, off_t offset,
-            struct fuse_file_info *fi) 
+            struct fuse_file_info *fi)
 {
   int retstat = 0;
 
@@ -459,39 +462,38 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
   //Need to be in whole block increments (ie % = zero) for block tracking purposes (either have entire block or do not)
   off_t lowerOffset = alignLowerOffset(offset);
   size_t alignedSize = block_size*(size/block_size);
-  if(size%block_size != 0) 
+  if(size%block_size != 0)
   {
     alignedSize = alignedSize + block_size;
   }
   off_t upperOffset = alignUpperOffset(offset+alignedSize);
-  
+
   //Check our cache for if all data is present, otherwise write in all blocks (possibly repetitvely) then read
   //Sequential write speed prioritized, could be bad in case of long write that could be sped up through seeks
   bool cacheDataHit = false;
-  char cacheFileName[PATH_MAX];
-  cfs_pathToFileName(cacheFileName, path);
-  //bool cacheDataHit = checkDataHit(cacheFileName); Uncomment when implemented 
+  //bool cacheDataHit = checkDataHit(cacheFileName); Uncomment when implemented
 
   log_msg(
       "\ncfs_read original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, buf, size, offset, fi);
 
+  char* cacheBuf = malloc(alignedSize*sizeof(char));
   log_msg(
       "\ncfs_read aligned(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, cacheBuf, alignedSize, lowerOffset, fi);
   // no need to get nasPath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
-  char* cacheBuf = malloc(alignedSize*sizeof(char));
-
   if(cacheDataHit == false)//need to write to cache for possible future reads
   {
     retstat = log_syscall("Data miss:nas pread plus fill cache", pread(fi->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
-    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset); write our new data to cache for future reads Uncomment when implemented 
+    char cacheFileName[PATH_MAX];
+    cfs_pathToFileName(cacheFileName, path);
+    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset);// write our new data to cache for future reads Uncomment when implemented
   }
   else//data is present and can be read from cache
   {
-    retstat = log_syscall("Data hit:cache pread", pread(openCacheFile->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+    retstat = log_syscall("Data hit:cache pread", pread(openCacheFile.fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
   }
   memcpy(buf, cacheBuf+offset-lowerOffset, size);//write to buffer the requested data (offset-lowerOffset will bump up cacheBuf to where the real data starts)
 
@@ -516,7 +518,7 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   //Need to be in whole block increments (ie % = zero) for block tracking purposes (either have entire block or do not)
   off_t lowerOffset = alignLowerOffset(offset);
   size_t alignedSize = block_size*(size/block_size);
-  if(size%block_size != 0) 
+  if(size%block_size != 0)
   {
     alignedSize = alignedSize + block_size;
   }
@@ -532,12 +534,14 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
   //Check if file is present in cache, and if so write to it using cacheWrite
   bool presentInCache = true;
-  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented 
+  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented
   if(presentInCache)//write to cachefor future reads
   {
     char* cacheBuf = malloc(alignedSize*sizeof(char));
     log_syscall("Reading for write to cache", pread(fi->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
-    retstat = cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset);// write our new data to cache for future reads Uncomment when implemented 
+    char cacheFileName[PATH_MAX];
+    cfs_pathToFileName(cacheFileName, path);
+    retstat = cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset);// write our new data to cache for future reads Uncomment when implemented
   }
 
   return retstat;
@@ -1096,14 +1100,14 @@ int main(int argc, char *argv[]) {
       fprintf(stderr,"Supplied cache size is too large. Cache size will be set to: %lu\n", fsAvailKb);
       cache_size = fsAvailKb;
     }
-    else//user supplied is fine 
+    else//user supplied is fine
     {
       fprintf(stderr,"Supplied cache size is accepted as it is below available space.\n");
       cache_size = userSize;
     }
   }
 
-  sscanf(argv[argc-4], "%lu", &block_size);//set our block size 
+  sscanf(argv[argc-4], "%lu", &block_size);//set our block size
   argv[argc - 5] = argv[argc - 2];//put mountdir in first non null argv entry
   argv[argc - 4] = NULL;
   argv[argc - 3] = NULL;
@@ -1116,7 +1120,7 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "New block size (Bytes): %lu\n", block_size);
   // Pull the rootdir out of the argument list and save it in my
   // internal data
-  
+
 
   cfs_data->logfile = log_open();
 
