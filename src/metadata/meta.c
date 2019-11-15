@@ -28,6 +28,9 @@ int main(void) {
 
   set_block_size(1024);
 
+  // function to init cache_used_size 
+  printf("\n");
+  init_cache_used_size(db);
   printf("Cache Usage: %lu\n", cache_used_size);
 
   // insert new file into metadata
@@ -43,7 +46,6 @@ int main(void) {
 
   printf("Cache Usage: %lu\n", cache_used_size);
 
-  // function to init cache_used_size
 
   // function to update remote file size- call on close() &|or open()
 
@@ -75,16 +77,61 @@ void set_block_size(size_t blk_size){
   }
 }
 
+size_t str_to_num(const char *str) {
+  char *endptr;
+  // check for -ve nos.
+  if (str[0] == '-') {
+    printf("Invalid Input:\t%s\n", str);
+    exit(EXIT_FAILURE);
+  }
+  errno = 0;
+  size_t val = strtoul(str, &endptr, 10);
 
+  if (errno) {
+    perror("Invalid Input: ");
+    exit(EXIT_FAILURE);
+  }
+
+  if (endptr == str) {
+    fprintf(stderr, "Invalid Input:\t%s\nNo digits were found.\n", str);
+    exit(EXIT_FAILURE);
+  }
+
+  return val;
+}
+
+
+// For pre-exisiting metadata, see how much file size is used already
 void init_cache_used_size(sqlite3 *db){
+  char *sql, *ErrMsg;
+  sql = "SELECT SUM(local_size) FROM Files;";
 
+  /* Execute SQL statement */
+  int ret = sqlite3_exec(db, sql, callback, 0, &ErrMsg);
+  // check return code for status
+   
+   if (ret != SQLITE_OK){
+      fprintf(stderr, "Create Tables: SQL error: %s\n", ErrMsg);
+      sqlite3_free(ErrMsg);
+   }
 }
 
 // Used for sqlite3
-static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
+static int callback(void *NotUsed, int argc, char **argv, char **ColName) {
+  if (argc == 1)
+  {
+    // Check if it is the SUM(local_size)
+    // if yes, set cache_used_size
+    if (strcmp(ColName[0], "SUM(local_size)") == 0)
+    {
+      cache_used_size = (argv[0] ? str_to_num(argv[0]) : cache_used_size);
+      return 0;
+    }
+  }
+
   int i;
   for (i = 0; i < argc; i++) {
-    printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    printf("%s = %s\n", ColName[i], argv[i] ? argv[i] : "NULL");
   }
   printf("\n");
   return 0;

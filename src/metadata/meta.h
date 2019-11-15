@@ -1,4 +1,7 @@
 #include <sqlite3.h>
+#include <assert.h>
+#include <string.h>
+#include <errno.h>
 
 #define VERBOSE 1
 #define UNUSED(x) (void)(x)
@@ -13,6 +16,7 @@ static size_t cache_used_size = 0;
 
 void set_block_size(size_t blk_size);
 void init_cache_used_size(sqlite3 *db);
+size_t str_to_num(const char *str);
 
 LRU_block* init_lru_blk(){
   LRU_block *lru_block = malloc(sizeof(LRU_block));

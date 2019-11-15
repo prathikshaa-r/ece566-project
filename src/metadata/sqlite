@@ -27,8 +27,7 @@ INSERT INTO Datablocks (blk_start_offset, file_id) VALUES
 
 UPDATE Files SET local_size = local_size + ?1 WHERE relative_path = ?2;
 
-
-
+SELECT SUM(local_size) FROM Files;
 
 DELETE FROM Files WHERE relative_path = ?;
 DELETE FROM Datablocks WHERE
