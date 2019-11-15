@@ -39,6 +39,6 @@ int update_lru_blk(sqlite3* db, char* filename, int blk_offset);
 int update_blk_time(sqlite3* db, char * filename, int blk_offset);
 
 int is_file_in_cache(sqlite3* db, char * filename);
-int is_blk_in_cache(sqlite3* db, char * filename);
-int are_blocks_in_cache(sqlite3* db, char * filename);
+int is_blk_in_cache(sqlite3* db, char * filename, int blk_offset);
+int are_blocks_in_cache(sqlite3* db, char * filename, int num_blks, int *blk_arr, int *bool_arr, );
 
