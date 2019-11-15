@@ -235,11 +235,15 @@ int cfs_mkdir(const char *path, mode_t mode) {
 /** Remove a file */
 int cfs_unlink(const char *path) {
   char nasPath[PATH_MAX];
+  char cacheFileName[PATH_MAX];
+  char cachePath[PATH_MAX];
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_fullCachePath(cachePath, cacheFileName);
 
-  log_msg("cfs_unlink(path=\"%s\")\n", path);
   cfs_fullNasPath(nasPath, path);
-
-  return log_syscall("unlink", unlink(nasPath), 0);
+  log_msg("cfs_unlink(nasPath=\"%s\", cachePath=\"%s\")\n", nasPath, cachePath);
+  log_syscall("Cache unlink", unlink(cachePath), 0);
+  return log_syscall("NAS unlink", unlink(nasPath), 0);
 }
 
 /** Remove a directory */
@@ -281,13 +285,23 @@ int cfs_rename(const char *path, const char *newpath) {
 
 /** Create a hard link to a file */
 int cfs_link(const char *path, const char *newpath) {
-  char nasPath[PATH_MAX], fnewpath[PATH_MAX];
+  char nasPath[PATH_MAX], nasLinkPath[PATH_MAX];
+  char cacheFileName[PATH_MAX], cacheLinkName[PATH_MAX];
+  char cachePath[PATH_MAX], cacheLinkPath[PATH_MAX];
 
-  log_msg("\ncfs_link(path=\"%s\", newpath=\"%s\")\n", path, newpath);
   cfs_fullNasPath(nasPath, path);
-  cfs_fullNasPath(fnewpath, newpath);
+  cfs_fullNasPath(nasLinkPath, newpath);
 
-  return log_syscall("link", link(nasPath, fnewpath), 0);
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_pathToFileName(cacheLinkName, newpath);
+
+  cfs_fullCachePath(cachePath, cacheFileName);
+  cfs_fullCachePath(cacheLinkPath, cacheLinkName);
+
+  log_msg("\ncfs_link(path=\"%s\", newpath=\"%s\")\nCache link: \"%s\"\n", path, newpath, cacheLinkPath);
+
+  log_syscall("Cache link", link(cachePath, cacheLinkPath), 0);
+  return log_syscall("NAS link", link(nasPath, nasLinkPath), 0);
 }
 
 /** Change the permission bits of a file */
@@ -326,6 +340,7 @@ int cfs_truncate(const char *path, off_t newsize) {
 /* note -- I'll want to change this as soon as 2.6 is in debian testing */
 int cfs_utime(const char *path, struct utimbuf *ubuf) {
   char nasPath[PATH_MAX];
+
 
   log_msg("\ncfs_utime(path=\"%s\", ubuf=0x%08x)\n", path, ubuf);
   cfs_fullNasPath(nasPath, path);
@@ -395,10 +410,10 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 
   //Make open calls to both the NAS and Cache
   //Return values are file descriptors for each file
-  //fi and openCacheFile flags are passed to the open call
-  openCacheFile.flags = fi->flags;
+  //fi flags are passed to the open call
+  fi->fh = (uint64_t)malloc(sizeof(struct dualFileHandle));
   nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);
-  cacheFileDescriptor = log_syscall("Cache open", open(cachePath, openCacheFile.flags), 0);
+  cacheFileDescriptor = log_syscall("Cache open", open(cachePath, O_RDWR), 0);
 
   // if the open call succeeds, my retstat is the file descriptor,
   // else it's -errno.  I'm making sure that in that case the saved
@@ -409,8 +424,10 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
     retstat = log_error("Open in Cache Directory.");
 
   //Set respective file handles for both the fuse_file_infos
-  fi->fh = nasFileDescriptor;
-  openCacheFile.fh = cacheFileDescriptor;
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
+  dualFH->nasFH = nasFileDescriptor;
+  dualFH->cacheFH = cacheFileDescriptor;
 
   log_fi(fi);
 
@@ -420,21 +437,20 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 //Specifically write to cache
 //Need for reads so that future reads can be from cache
 //Also called by cfs_write when the file is in cache, has same function
-int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_t offset)
+int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
   char cachePath[PATH_MAX];
   cfs_fullCachePath(cachePath, cacheFileName);
-  
-  int cacheFileDescriptor;
-  cacheFileDescriptor = log_syscall("Cache open", open(cachePath, openCacheFile.flags), 0);
 
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
   log_msg(
-      "\ncfs_cacheWrite(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-      cachePath, buf, size, offset, openCacheFile);
+      "\ncfs_cacheWrite(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, cacheFileHandle = 0x % 016llx)\n",
+      cachePath, buf, size, offset, fi, dualFH->cacheFH);
 
-  log_fi(&openCacheFile);
+  log_fi(fi);
 
-  return log_syscall("pwrite", pwrite(openCacheFile.fh, buf, size, offset), 0);
+  return log_syscall("pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
 }
 
 /** Read data from an open file
@@ -470,30 +486,35 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
 
   //Check our cache for if all data is present, otherwise write in all blocks (possibly repetitvely) then read
   //Sequential write speed prioritized, could be bad in case of long write that could be sped up through seeks
+  int number_blocks = alignedSize/block_size;
+  bool cacheBlockHits[number_blocks];
+
   bool cacheDataHit = false;
   //bool cacheDataHit = checkDataHit(cacheFileName); Uncomment when implemented
 
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
   log_msg(
-      "\ncfs_read original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-      path, buf, size, offset, fi);
+      "\ncfs_read original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx, cacheFH = 0x % 016llx)\n",
+      path, buf, size, offset, fi, dualFH->nasFH, dualFH->cacheFH);
 
   char* cacheBuf = malloc(alignedSize*sizeof(char));
   log_msg(
-      "\ncfs_read aligned(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-      path, cacheBuf, alignedSize, lowerOffset, fi);
+      "\ncfs_read aligned(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx, cacheFH = 0x % 016llx)\n",
+      path, cacheBuf, alignedSize, lowerOffset, fi, dualFH->nasFH, dualFH->cacheFH);
   // no need to get nasPath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
   if(cacheDataHit == false)//need to write to cache for possible future reads
   {
-    retstat = log_syscall("Data miss:nas pread plus fill cache", pread(fi->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+    retstat = log_syscall("Data miss:nas pread plus fill cache", pread(dualFH->nasFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
     char cacheFileName[PATH_MAX];
     cfs_pathToFileName(cacheFileName, path);
-    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset);// write our new data to cache for future reads Uncomment when implemented
+    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
   }
   else//data is present and can be read from cache
   {
-    retstat = log_syscall("Data hit:cache pread", pread(openCacheFile.fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+    retstat = log_syscall("Data hit:cache pread", pread(dualFH->cacheFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
   }
   memcpy(buf, cacheBuf+offset-lowerOffset, size);//write to buffer the requested data (offset-lowerOffset will bump up cacheBuf to where the real data starts)
 
@@ -524,13 +545,16 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   }
   off_t upperOffset = alignUpperOffset(offset+alignedSize);
 
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
+
   log_msg(
-      "\ncfs_write original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
-      path, buf, size, offset, fi);
+      "\ncfs_write original(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx, cacheFH = 0x % 016llx)\n",
+      path, buf, size, offset, fi, dualFH->nasFH, dualFH->cacheFH);
 
   log_fi(fi);
 
-  retstat = log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
+  retstat = log_syscall("pwrite", pwrite(dualFH->nasFH, buf, size, offset), 0);//write to NAS here
 
   //Check if file is present in cache, and if so write to it using cacheWrite
   bool presentInCache = true;
@@ -538,10 +562,13 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   if(presentInCache)//write to cachefor future reads
   {
     char* cacheBuf = malloc(alignedSize*sizeof(char));
-    log_syscall("Reading for write to cache", pread(fi->fh, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+    log_msg(
+        "\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
+        cacheBuf, alignedSize, lowerOffset, fi, dualFH->nasFH);
+    log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
     char cacheFileName[PATH_MAX];
     cfs_pathToFileName(cacheFileName, path);
-    retstat = cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset);// write our new data to cache for future reads Uncomment when implemented
+    retstat = cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
   }
 
   return retstat;
@@ -616,12 +643,19 @@ int cfs_flush(const char *path, struct fuse_file_info *fi) {
  * Changed in version 2.2
  */
 int cfs_release(const char *path, struct fuse_file_info *fi) {
-  log_msg("\ncfs_release(path=\"%s\", fi=0x%08x)\n", path, fi);
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
+  log_msg("\ncfs_release(path=\"%s\", fi=0x%08x, nasFH=0x%016llx, cacheFH=0x%016llx)\n", path, fi,dualFH->nasFH,dualFH->cacheFH);
   log_fi(fi);
 
+  int nasClose;
   // We need to close the file.  Had we allocated any resources
   // (buffers etc) we'd need to free them here as well.
-  return log_syscall("close", close(fi->fh), 0);
+  //Closing file in cache as well
+  log_syscall("Cache close", close(dualFH->cacheFH), 0);
+  nasClose = log_syscall("NAS close", close(dualFH->nasFH), 0);
+  free((void *)fi->fh);
+  return nasClose;
 }
 
 /** Synchronize file contents
@@ -632,17 +666,22 @@ int cfs_release(const char *path, struct fuse_file_info *fi) {
  * Changed in version 2.2
  */
 int cfs_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
-  log_msg("\ncfs_fsync(path=\"%s\", datasync=%d, fi=0x%08x)\n", path, datasync,
-          fi);
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
+  log_msg("\ncfs_fsync(path=\"%s\", datasync=%d, fi=0x%08x,  nasFH=0x%016llx, cacheFH=0x%016llx)\n", path, datasync,
+          fi, dualFH->nasFH,dualFH->cacheFH);
   log_fi(fi);
 
   // some unix-like systems (notably freebsd) don't have a datasync call
 #ifdef HAVE_FDATASYNC
   if (datasync)
-    return log_syscall("fdatasync", fdatasync(fi->fh), 0);
-  else
+  {
+    log_syscall("Cache fdatasync", fdatasync(dualFH->cacheFH), 0);
+    return log_syscall("NAS fdatasync", fdatasync(dualFH->nasFH), 0);
+  }
 #endif
-    return log_syscall("fsync", fsync(fi->fh), 0);
+  log_syscall("Cache fsync", fsync(dualFH->cacheFH), 0);
+  return log_syscall("NAS fsync", fsync(dualFH->nasFH), 0);
 }
 
 #ifdef HAVE_SYS_XATTR_H
@@ -936,13 +975,18 @@ int cfs_access(const char *path, int mask) {
 int cfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
   int retstat = 0;
 
-  log_msg("\ncfs_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n", path, offset,
-          fi);
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
+  log_msg("\ncfs_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x, nasFH=0x%016llx, cacheFH=0x%016llx)\n", path, offset,
+          fi, dualFH->nasFH,dualFH->cacheFH);
   log_fi(fi);
 
-  retstat = ftruncate(fi->fh, offset);
+  retstat = ftruncate(dualFH->cacheFH, offset);
   if (retstat < 0)
-    retstat = log_error("cfs_ftruncate ftruncate");
+    retstat = log_error("cfs_ftruncate Cache ftruncate");
+  retstat = ftruncate(dualFH->nasFH, offset);
+  if (retstat < 0)
+    retstat = log_error("cfs_ftruncate NAS ftruncate");
 
   return retstat;
 }
@@ -974,7 +1018,9 @@ int cfs_fgetattr(const char *path, struct stat *statbuf,
   if (!strcmp(path, "/"))
     return cfs_getattr(path, statbuf);
 
-  retstat = fstat(fi->fh, statbuf);
+  struct dualFileHandle *dualFH;
+  dualFH = (struct dualFileHandle *)fi->fh;
+  retstat = fstat(dualFH->nasFH, statbuf);
   if (retstat < 0)
     retstat = log_error("cfs_fgetattr fstat");
 
@@ -1088,7 +1134,7 @@ int main(int argc, char *argv[]) {
 
     double KBperBlock = ((double)(fsBuffer->f_bsize)/1024.0);
     long unsigned fsAvailKb = (long unsigned)(KBperBlock*fsBuffer->f_bavail);
-    fprintf(stderr,"File system available cache space: %lu\n", fsAvailKb);
+    fprintf(stderr,"File system available cache space (Kb): %lu\n", fsAvailKb);
 
     if(userSize > fsAvailKb-100 && fsAvailKb > 100)//allow 100 kB buffer space
     {
