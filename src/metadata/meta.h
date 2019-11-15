@@ -8,6 +8,11 @@ struct LRU_block{
   int blk_offset;
 } typedef LRU_block;
 
+static size_t block_size = 0;
+static size_t cache_used_size = 0;
+
+void set_block_size(size_t blk_size);
+void init_cache_used_size(sqlite3 *db);
 
 LRU_block* init_lru_blk(){
   LRU_block *lru_block = malloc(sizeof(LRU_block));
@@ -24,7 +29,7 @@ void open_db(char * db_name, sqlite3 ** db);
 int create_tables(sqlite3 * db);
 
 // inserts a new file into the database
-int create_file(sqlite3* db, char * filename, size_t remote_size, size_t local_size);
+int create_file(sqlite3* db, char * filename, size_t remote_size);
 // remove deleted file
 int delete_file(sqlite3* db, char * filename);
 
@@ -40,5 +45,9 @@ int update_blk_time(sqlite3* db, char * filename, int blk_offset);
 
 int is_file_in_cache(sqlite3* db, char * filename);
 int is_blk_in_cache(sqlite3* db, char * filename, int blk_offset);
-int are_blocks_in_cache(sqlite3* db, char * filename, int num_blks, int *blk_arr, int *bool_arr, );
+
+// blk array should be malloced appropriately and will be used to set boolean 
+// values for each offset in the blk_arr
+int are_blocks_in_cache(sqlite3* db, char * filename, int num_blks, 
+	int *blk_arr, int *bool_arr);
 

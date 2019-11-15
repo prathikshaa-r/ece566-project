@@ -1,0 +1,38 @@
+CREATE TABLE Files (
+	file_id		INTEGER	PRIMARY KEY,
+	relative_path 	TEXT 	NOT NULL UNIQUE,
+	remote_size	INTEGER	NOT NULL,
+	local_size	INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE Datablocks(
+	block_id		INTEGER		PRIMARY KEY,
+	blk_start_offset	INTEGER		NOT NULL,
+	valid		BOOLEAN		NOT NULL DEFAULT 1,
+	timestamp	DATETIME 	NOT NULL DEFAULT (DATETIME('now')),
+	file_id		INTEGER		NOT NULL,
+
+	UNIQUE(block_start_offset, file_id),
+
+	CONSTRAINT fk_column
+		FOREIGN KEY 	file_id 	REFERENCES files(file_id) 
+		ON DELETE CASCADE
+);
+
+INSERT INTO Files(relative_path, remote_size, local_size) 
+VALUES(%s, %d, %d); --// filename, remote_size, local_size
+
+INSERT INTO Datablocks (blk_start_offset, file_id) VALUES
+    ( %d, (SELECT file_id from files WHERE relative_path=%s) );
+
+UPDATE Files SET local_size = local_size + ?1 WHERE relative_path = ?2;
+
+
+
+
+DELETE FROM Files WHERE relative_path = ?;
+DELETE FROM Datablocks WHERE
+ file_id=(SELECT file_id from files WHERE relative_path=%s);
+
+
+
