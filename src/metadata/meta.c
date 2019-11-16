@@ -40,12 +40,8 @@ int main(void) {
   insert_block(db, "newdir/hello/Test2.txt", 1234);
   insert_block(db, "newdir/hello/Test2.txt", 1578);
 
-  printf("Size of blk_arr[0]: %lu\n", sizeof(blk_arr[0]));
   size_t *blk_arr = (size_t*)malloc(sizeof(*blk_arr)*4);
-
   memcpy(blk_arr, (size_t[4]) {1024, 1948, 0000, 2134}, sizeof(blk_arr[0])*4);
-  
-  printf("blk\n");
   insert_blocks(db, "newdir/hello/Hello.txt", 4, blk_arr);
   free(blk_arr);
 
@@ -67,6 +63,14 @@ int main(void) {
   sqlite3_close(db);
 
   return EXIT_SUCCESS;
+}
+
+
+LRU_block* init_lru_blk(){
+  LRU_block *lru_block = malloc(sizeof(LRU_block));
+  lru_block->filename = NULL;
+  lru_block->blk_offset = 0;
+  return lru_block;
 }
 
 void print_cache_used_size(){

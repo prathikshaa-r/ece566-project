@@ -1,8 +1,6 @@
 CFLAGS=-std=gnu99 -Wall -Werror -pedantic
 CC=gcc
 
-all:
-
 meta: meta.c meta.h
 	$(CC) $(CFLAGS)  -o meta meta.c -lsqlite3
 

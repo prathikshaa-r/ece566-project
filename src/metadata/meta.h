@@ -1,3 +1,6 @@
+#ifndef __META_H__
+#define __META_H__
+
 #include <sqlite3.h>
 #include <assert.h>
 #include <string.h>
@@ -21,12 +24,7 @@ size_t get_cache_used_size();
 
 size_t str_to_num(const char *str);
 
-// LRU_block* init_lru_blk(){
-//   LRU_block *lru_block = malloc(sizeof(LRU_block));
-//   lru_block->filename = NULL;
-//   lru_block->blk_offset = 0;
-//   return lru_block;
-// }
+LRU_block* init_lru_blk();
 
 // callback function used to execute sql statements
 static int callback(void *NotUsed, int argc, char **argv, char **azColName);
@@ -60,3 +58,4 @@ int is_blk_in_cache(sqlite3* db, char * filename, int blk_offset);
 int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks, 
 	size_t *blk_arr, int *bool_arr);
 
+#endif // __META_H_ 
