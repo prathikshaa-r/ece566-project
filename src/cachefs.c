@@ -411,14 +411,14 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
     cfs_mkCacheNod(cachePath, myMode, myDev);
   }
   log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n, flags= %d", path, fi, fi->flags);
-  log_msg("\ncfs_open(flag bitwise: )\n", fi->flags & 0x3);
+  log_msg("\ncfs_open(flag bitwise: %d)\n", fi->flags & 0x3);
   //Make open calls to both the NAS and Cache
   //Return values are file descriptors for each file
   //fi flags are passed to the open call
   //
   //00- RD 01-WOnly 10-RW
   fi->fh = (uint64_t)malloc(sizeof(struct dualFileHandle));
-  if((fi->flags & 0x3) == 0x2)//if write only, chang to read write
+  if((fi->flags & 0x3) == 1)//if write only, chang to read write
   {
     nasFileDescriptor = log_syscall("NAS open", open(nasPath, O_RDWR), 0);
   } 
@@ -594,7 +594,7 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
     log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
     char cacheFileName[PATH_MAX];
     cfs_pathToFileName(cacheFileName, path);
-    retstat = cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
+    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
   }
 
   return retstat;
