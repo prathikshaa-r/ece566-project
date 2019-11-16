@@ -154,7 +154,7 @@ static int callback(void *NotUsed, int argc, char **argv, char **ColName) {
 // open database and return the database pointer
 int open_db(char * db_name, sqlite3 ** db){
   int ret = sqlite3_open(db_name, db);
-  char *ErrMsg = 0;ma
+  char *ErrMsg = 0;
 
   if (ret != SQLITE_OK) {
     fprintf(stderr, "Cannot open database: %s, \n", sqlite3_errmsg(*db));
@@ -176,6 +176,7 @@ int open_db(char * db_name, sqlite3 ** db){
   if (VERBOSE) {
     printf("Opened database successfully!\n");
   }
+  return 0;
 }
 
 // create the FILES and DATABLOCKS tables
