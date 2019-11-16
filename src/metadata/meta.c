@@ -47,6 +47,7 @@ int main(void) {
   free(blk_arr);
 
   delete_file(db, "newdir/hello/Test2.txt");
+  delete_block(db, "newdir/hello/Hello.txt", 2134);
 
   print_cache_used_size();
 
@@ -171,6 +172,7 @@ int open_db(char * db_name, sqlite3 ** db){
   if (ret != SQLITE_OK){
       fprintf(stderr, "Open DB: Forign Key Pragma: SQL error: %s\n", ErrMsg);
       sqlite3_free(ErrMsg);
+      return -1;
    } 
 
   if (VERBOSE) {
@@ -266,7 +268,7 @@ int create_file(sqlite3* db, char * filename, size_t remote_size){
 
 }
 
-int insert_block(sqlite3* db, char * filename, int blk_offset){
+int insert_block(sqlite3* db, char * filename, size_t blk_offset){
   // INSERT INTO DATABLOCKS
   // Then update the local_size of the file
   // and update cache_size_used variable
@@ -338,7 +340,11 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
 
 
 int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
-  printf("Num of blocks: %lu\n", num_blks);
+  if (VERBOSE)
+  {
+    printf("Num of blocks to insert: %lu\n", num_blks);
+  }
+
   for (size_t i = 0; i < num_blks; ++i)
   {
     insert_block(db, filename, blk_arr[i]);
@@ -400,15 +406,78 @@ int delete_file(sqlite3* db, char * filename){
   return 0;
 }
 
-int delete_block(sqlite3* db, char * filename, int blk_offset){
+int delete_block(sqlite3* db, char * filename, size_t blk_offset){
+  // DELETE FILE
+  char *sql;
+  sqlite3_stmt *stmt;
+
+  /*-----------Delete from Datablocks------------*/
+  sql = "DELETE FROM Datablocks WHERE blk_start_offset = ?1 and "
+        "file_id=(SELECT file_id from Files WHERE relative_path=?2);";
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); // Do the select
+  // Bind
+  sqlite3_bind_int64(stmt, 1, blk_offset);
+  sqlite3_bind_text(stmt, 2, filename, -1, SQLITE_STATIC);
+  // STEP
+  int ret = sqlite3_step(stmt); 
+  cache_used_size -= meta_block_size; // for each deleted block reduce space used
+  if (VERBOSE)
+  {
+    print_cache_used_size();
+  }
+  if (ret != SQLITE_DONE) {
+    printf("Delete Block: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+   
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Delete Block: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Delete from Datablocks------------*/
+
+  if (VERBOSE) {
+    fprintf(stdout, "Block %s: %lu deleted.\n", filename, blk_offset);
+  }
   return 0;
 }
 
-int update_lru_blk(sqlite3* db, char * filename, int blk_offset){
+int delete_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
+  if (VERBOSE)
+  {
+    printf("Num of blocks to delete: %lu\n", num_blks);
+  }
+  for (size_t i = 0; i < num_blks; ++i)
+  {
+    if (VERBOSE)
+    {
+      printf("Deleting block %s:%lu\n", filename, blk_arr[i]);
+    }
+    delete_block(db, filename, blk_arr[i]);
+  }
   return 0;
 }
 
-int update_blk_time(sqlite3* db, char * filename, int blk_offset){
+int is_file_in_cache(sqlite3* db, char * filename){
+
+  return 0;
+}
+
+int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
+  return 0;
+}
+
+int update_blk_time(sqlite3* db, char * filename, size_t blk_offset){
   return 0;
 }
 
