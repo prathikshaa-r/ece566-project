@@ -5,69 +5,69 @@
 #include "meta.h"
 
 
-// int main(void) {
-//   // printf("%s\n", sqlite3_libversion());
+int main(void) {
+  // printf("%s\n", sqlite3_libversion());
 
-//   sqlite3 *db;
-//   sqlite3_stmt *res;
-//   char *sql;
-//   char *remainder;
-//   UNUSED(remainder);
+  sqlite3 *db;
 
-//   // open database - either in memory or from file
-//   open_db("Metadata-File.db", &db);
-//   // check if tables exist
-//   // else create the tables
-//   int ret = create_tables(db);
-//   if(ret == -1){
-//     fprintf(stdout, "Tables probably exist already!\n");
-//   }
+  // open database - either in memory or from file
+  open_db("Metadata-File.db", &db);
+  // check if tables exist
+  // else create the tables
+  int ret = create_tables(db);
+  if(ret == -1){
+    fprintf(stdout, "Tables probably exist already!\n");
+  }
   
-//   printf("Initializing LRU block...\n");
-//   init_lru_blk();
+  printf("Initializing LRU block...\n");
+  init_lru_blk();
 
-//   set_block_size(1024);
+  set_block_size(1024);
 
-//   // function to init cache_used_size 
-//   printf("\n");
-//   init_cache_used_size(db);
-//   printf("Cache Usage: %lu\n", cache_used_size);
+  // function to init cache_used_size 
+  printf("\n");
+  init_cache_used_size(db);
+  printf("Cache Usage: %lu\n", cache_used_size);
 
-//   // insert new file into metadata
-//   create_file(db, "newdir/hello/Hello.txt", 1234);
-//   create_file(db, "newdir/hello/Test2.txt", 1234);
-//   // function to create datablock entry
-//   printf("Calling insert block...\n");
-//   insert_block(db, "newdir/hello/Hello.txt", 1234);
-//   insert_block(db, "newdir/hello/Hello.txt", 1578);
+  // insert new file into metadata
+  create_file(db, "newdir/hello/Hello.txt", 1234);
+  create_file(db, "newdir/hello/Test2.txt", 1234);
+  // function to create datablock entry
+  printf("Calling insert block...\n");
+  insert_block(db, "newdir/hello/Hello.txt", 1234);
+  insert_block(db, "newdir/hello/Hello.txt", 1578);
 
-//   insert_block(db, "newdir/hello/Test2.txt", 1234);
-//   insert_block(db, "newdir/hello/Test2.txt", 1578);
+  insert_block(db, "newdir/hello/Test2.txt", 1234);
+  insert_block(db, "newdir/hello/Test2.txt", 1578);
 
-//   printf("Cache Usage: %lu\n", cache_used_size);
+  printf("Size of blk_arr[0]: %lu\n", sizeof(blk_arr[0]));
+  size_t *blk_arr = (size_t*)malloc(sizeof(*blk_arr)*4);
 
-
-//   // function to update remote file size- call on close() &|or open()
-
-//   // function to update block timestamp
-
-//   // function to delete file (and relevant data-blocks) - using FK cascade
-
-//   // check file in cache
-
-//   // check block in cache
-
-//   // check blocks in cache
-
-//   // close database
-//   sqlite3_close(db);
-
+  memcpy(blk_arr, (size_t[4]) {1024, 1948, 0000, 2134}, sizeof(blk_arr[0])*4);
   
-//   UNUSED(res);
-//   UNUSED(sql);
+  printf("blk\n");
+  insert_blocks(db, "newdir/hello/Hello.txt", 4, blk_arr);
+  free(blk_arr);
 
-//   return EXIT_SUCCESS;
-// }
+  printf("Cache Usage: %lu\n", cache_used_size);
+
+  // function to update remote file size- call on close() &|or open()
+
+  // function to update block timestamp
+
+  // function to delete file (and relevant data-blocks) - using FK cascade
+
+  // check file in cache
+
+  // check block in cache
+
+  // check blocks in cache
+
+  // close database
+  sqlite3_close(db);
+
+  return EXIT_SUCCESS;
+}
 
 void print_cache_used_size(){
   printf("Cache Usage: %lu\n", cache_used_size);
@@ -323,6 +323,16 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
   return 0;
 }
 
+
+int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
+  printf("Num of blocks: %lu\n", num_blks);
+  for (size_t i = 0; i < num_blks; ++i)
+  {
+    insert_block(db, filename, blk_arr[i]);
+  }
+  return 0;
+}
+
 int delete_block(sqlite3* db, char * filename, int blk_offset){
   return 0;
 }
@@ -333,7 +343,7 @@ int delete_file(sqlite3* db, char * filename){
 }
 
 
-int update_lru_blk(sqlite3* db, char* filename, int blk_offset){
+int update_lru_blk(sqlite3* db, char * filename, int blk_offset){
   return 0;
 }
 

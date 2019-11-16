@@ -42,11 +42,13 @@ int delete_file(sqlite3* db, char * filename);
 
 // inserts new block into database
 int insert_block(sqlite3* db, char * filename, int blk_offset);
+// inserts several blocks into database
+int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
 // delete evicted block from file
 int delete_block(sqlite3* db, char * filename, int blk_offset);
 
 // change what the LRU block points to
-int update_lru_blk(sqlite3* db, char* filename, int blk_offset);
+int update_lru_blk(sqlite3* db, char * filename, int blk_offset);
 // call on every write to block
 int update_blk_time(sqlite3* db, char * filename, int blk_offset);
 
@@ -54,7 +56,7 @@ int is_file_in_cache(sqlite3* db, char * filename);
 int is_blk_in_cache(sqlite3* db, char * filename, int blk_offset);
 
 // blk array should be malloced appropriately and will be used to set boolean 
-// values for each offset in the blk_arr
-int are_blocks_in_cache(sqlite3* db, char * filename, int num_blks, 
-	int *blk_arr, int *bool_arr);
+// blk_arr = [] of blk_offsets
+int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks, 
+	size_t *blk_arr, int *bool_arr);
 
