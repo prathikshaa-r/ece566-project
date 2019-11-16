@@ -255,9 +255,9 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-cachefs_SOURCES = cachefs.c log.c log.h params.h cacheHelp.c cacheHelp.h
+cachefs_SOURCES = cachefs.c log.c log.h params.h cacheHelp.c cacheHelp.h  metadata/meta.h
 AM_CFLAGS = -D_FILE_OFFSET_BITS=64 -I/usr/include/fuse
-LDADD = -lfuse -pthread
+LDADD = -lfuse -pthread -lsqlite3
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

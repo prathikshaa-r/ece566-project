@@ -43,6 +43,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "metadata/meta.h"
+
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
 #endif
@@ -329,10 +331,14 @@ int cfs_chown(const char *path, uid_t uid, gid_t gid)
 /** Change the size of a file */
 int cfs_truncate(const char *path, off_t newsize) {
   char nasPath[PATH_MAX];
-
-  log_msg("\ncfs_truncate(path=\"%s\", newsize=%lld)\n", path, newsize);
+  char cacheFileName[PATH_MAX];
+  char cachePath[PATH_MAX];
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_fullCachePath(cachePath, cacheFileName);
+  log_msg("\ncfs_truncate(path=\"%s\", cachePath=\"%s\", newsize=%lld)\n", path, cachePath, newsize);
   cfs_fullNasPath(nasPath, path);
 
+  log_syscall("truncate", truncate(cachePath, newsize),0);
   return log_syscall("truncate", truncate(nasPath, newsize), 0);
 }
 
@@ -397,7 +403,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   cfs_fullCachePath(cachePath, cacheFileName);
 
   bool presentInCache = false;
-  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented
+  //presentInCache = is_file_in_cache(cacheMeta, cacheFileName); //---- Uncomment when implemented
 
   if(!presentInCache)//create a new file in the cache dir
   {
@@ -406,13 +412,22 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
     dev_t myDev = cfs_getDev(path);
     cfs_mkCacheNod(cachePath, myMode, myDev);
   }
-  log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n", path, fi);
+  log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n, flags= %d", path, fi, fi->flags);
 
   //Make open calls to both the NAS and Cache
   //Return values are file descriptors for each file
   //fi flags are passed to the open call
+  //
+  //00- RD 01-WOnly 10-RW
   fi->fh = (uint64_t)malloc(sizeof(struct dualFileHandle));
-  nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);
+  if((fi->flags & 0x3) == 0x2)//if write only, chang to read write
+  {
+    nasFileDescriptor = log_syscall("NAS open", open(nasPath, O_RDWR), 0);
+  } 
+  else
+  {
+    nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);//
+  }
   cacheFileDescriptor = log_syscall("Cache open", open(cachePath, O_RDWR), 0);
 
   // if the open call succeeds, my retstat is the file descriptor,
@@ -425,10 +440,10 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 
   //Set respective file handles for both the fuse_file_infos
   struct dualFileHandle *dualFH;
-  dualFH = (struct dualFileHandle *)fi->fh;
+  dualFH = malloc(sizeof(struct dualFileHandle));
   dualFH->nasFH = nasFileDescriptor;
   dualFH->cacheFH = cacheFileDescriptor;
-
+  fi->fh = (uint64_t)dualFH;
   log_fi(fi);
 
   return retstat;
@@ -487,10 +502,15 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
   //Check our cache for if all data is present, otherwise write in all blocks (possibly repetitvely) then read
   //Sequential write speed prioritized, could be bad in case of long write that could be sped up through seeks
   int number_blocks = alignedSize/block_size;
-  bool cacheBlockHits[number_blocks];
+  bool cacheBlockHitYN[number_blocks];
+  int offsetArray[number_blocks];
+  for(int cnt = 0; cnt<number_blocks; cnt++)
+  {
+    offsetArray[cnt] = lowerOffset+(block_size*cnt);
+  }
 
   bool cacheDataHit = false;
-  //bool cacheDataHit = checkDataHit(cacheFileName); Uncomment when implemented
+  //bool cacheDataHit = are_blocks_in_cache(cacheMeta, cacheFileName, number_blocks, offsetArray, cacheBlockHitYN); //Uncomment when implemented
 
   struct dualFileHandle *dualFH;
   dualFH = (struct dualFileHandle *)fi->fh;
@@ -542,6 +562,7 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   if(size%block_size != 0)
   {
     alignedSize = alignedSize + block_size;
+    log_msg("\nWrite aligned size: %d, size %d, block size %d\n", alignedSize, size, block_size);
   }
   off_t upperOffset = alignUpperOffset(offset+alignedSize);
 
@@ -555,17 +576,24 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   log_fi(fi);
 
   retstat = log_syscall("pwrite", pwrite(dualFH->nasFH, buf, size, offset), 0);//write to NAS here
+  struct stat *nasAttr = malloc(sizeof(struct stat));
+  cfs_getattr(path, nasAttr);
 
   //Check if file is present in cache, and if so write to it using cacheWrite
   bool presentInCache = true;
-  // presentInCache = is_file_in_cache(cacheFileName); ---- Uncomment when implemented
+  //presentInCache = is_file_in_cache(cacheMeta, cacheFileName);// ---- Uncomment when implemented
   if(presentInCache)//write to cachefor future reads
   {
     char* cacheBuf = malloc(alignedSize*sizeof(char));
+    size_t nasReadSize = alignedSize;
+    if(nasReadSize+lowerOffset > nasAttr->st_size)
+    {
+	nasReadSize = nasAttr->st_size-lowerOffset;	    
+    }
     log_msg(
         "\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
-        cacheBuf, alignedSize, lowerOffset, fi, dualFH->nasFH);
-    log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+        cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
+    log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
     char cacheFileName[PATH_MAX];
     cfs_pathToFileName(cacheFileName, path);
     retstat = cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
