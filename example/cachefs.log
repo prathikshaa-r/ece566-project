@@ -11,16 +11,16 @@ cfs_init()
     max_background =  0
     congestion_threshold =  0
     context:
-    fuse = e30d5860
+    fuse = 3eb5e860
     uid =  0
     gid =  0
     pid =  0
-    private_data = e30d3260
-    logfile = e30d5320
+    private_data = 3eb5c260
+    logfile = 3eb5e320
     nasdir = /home/wjb24/ECE566/ece566-project/example/nasdir
     umask = 00000
 
-cfs_getattr(path="/", statbuf=0xadbf5c00)
+cfs_getattr(path="/", statbuf=0x3f0e2c00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
@@ -34,26 +34,26 @@ cfs_getattr(path="/", statbuf=0xadbf5c00)
     st_size =  1024
     st_blksize =  1024
     st_blocks =  2
-    st_atime = 0x 5dcf42d5
-    st_mtime = 0x 5dcf0b68
-    st_ctime = 0x 5dcf0b68
+    st_atime = 0x 5dcf4957
+    st_mtime = 0x 5dcf4805
+    st_ctime = 0x 5dcf4805
 
 cfs_access(path="/", mask=01)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
 
-cfs_opendir(path="/", fi=0xadbf5c20)
+cfs_opendir(path="/", fi=0x3f0e2c20)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    opendir returned 0x0x7ff3a8002010
+    opendir returned 0x0x7f4530000e10
     fi:
     flags = 0x 00018800
     fh_old = 0x 00000000
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a8002010
+    fh = 0x 00007f4530000e10
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/", statbuf=0xad3f4c00)
+cfs_getattr(path="/", statbuf=0x3f8e3c00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
@@ -67,104 +67,25 @@ cfs_getattr(path="/", statbuf=0xad3f4c00)
     st_size =  1024
     st_blksize =  1024
     st_blocks =  2
-    st_atime = 0x 5dcf42d5
-    st_mtime = 0x 5dcf0b68
-    st_ctime = 0x 5dcf0b68
+    st_atime = 0x 5dcf4957
+    st_mtime = 0x 5dcf4805
+    st_ctime = 0x 5dcf4805
 
-cfs_readdir(path="/", buf=0xa8001f90, filler=0xae412d00, offset=0, fi=0xadbf5c20)
-    readdir returned 0x0x7ff3a8002040
-calling filler with name cat.txt
-calling filler with name boop.txt
+cfs_readdir(path="/", buf=0x30000d90, filler=0x40100d00, offset=0, fi=0x3f0e2c20)
+    readdir returned 0x0x7f4530000e40
 calling filler with name .
-calling filler with name newt.txt
-calling filler with name sloop.txt
 calling filler with name lost+found
-calling filler with name dog.txt
-calling filler with name monstah.txt
 calling filler with name ..
-calling filler with name bird.txt
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7ff3a8002010
+    fh_old = 0x 7f4530000e10
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a8002010
+    fh = 0x 00007f4530000e10
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/cat.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/cat.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/cat.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  13
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  21
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcef630
-    st_mtime = 0x 5dcef6d7
-    st_ctime = 0x 5dcef6d7
-
-cfs_getattr(path="/boop.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/boop.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/boop.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  18
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  18
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf0b69
-    st_mtime = 0x 5dcf0b74
-    st_ctime = 0x 5dcf0b74
-
-cfs_getattr(path="/newt.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newt.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newt.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  14
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  13
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcefcde
-    st_mtime = 0x 5dcefcef
-    st_ctime = 0x 5dcefcef
-
-cfs_getattr(path="/sloop.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/sloop.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/sloop.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  16
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  12
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf08ae
-    st_mtime = 0x 5dcf0763
-    st_ctime = 0x 5dcf0763
-
-cfs_getattr(path="/lost+found", statbuf=0xad3f4c30)
+cfs_getattr(path="/lost+found", statbuf=0x3f8e3c30)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/lost+found", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/lost+found"
     lstat returned 0
     si:
@@ -182,90 +103,18 @@ cfs_getattr(path="/lost+found", statbuf=0xad3f4c30)
     st_mtime = 0x 5dcef4c1
     st_ctime = 0x 5dcef4c1
 
-cfs_getattr(path="/dog.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/dog.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/dog.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  12
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1892
-    st_blksize =  1024
-    st_blocks =  4
-    st_atime = 0x 5dcef604
-    st_mtime = 0x 5dcef5d1
-    st_ctime = 0x 5dcef5d1
-
-cfs_getattr(path="/monstah.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/monstah.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/monstah.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  17
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  1024
-    st_blocks =  0
-    st_atime = 0x 5dcf0736
-    st_mtime = 0x 5dcf0736
-    st_ctime = 0x 5dcf0736
-
-cfs_getattr(path="/bird.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/bird.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/bird.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  15
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  10
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf0634
-    st_mtime = 0x 5dcf0647
-    st_ctime = 0x 5dcf0647
-
-cfs_releasedir(path="/", fi=0xadbf5c30)
+cfs_releasedir(path="/", fi=0x3f8e3c30)
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7ff3a8002010
+    fh_old = 0x 7f4530000e10
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a8002010
+    fh = 0x 00007f4530000e10
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/", statbuf=0xad3f4c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf42d5
-    st_mtime = 0x 5dcf0b68
-    st_ctime = 0x 5dcf0b68
-
-cfs_getattr(path="/snake.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_getattr(path="/newAnimal.txt", statbuf=0x3f0e2c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned -1
     ERROR lstat: No such file or directory
     si:
@@ -283,17 +132,17 @@ cfs_getattr(path="/snake.txt", statbuf=0xadbf5c30)
     st_mtime = 0x 00000000
     st_ctime = 0x 00000000
 
-cfs_mknod(path="/snake.txt", mode=0100664, dev=0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_mknod(path="/newAnimal.txt", mode=0100664, dev=0)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     open returned 5
     close returned 0
 
-cfs_getattr(path="/snake.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_getattr(path="/newAnimal.txt", statbuf=0x3f0e2c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  19
+    st_ino =  12
     st_mode = 0 100664
     st_nlink =  1
     st_uid =  1100998
@@ -302,21 +151,21 @@ cfs_getattr(path="/snake.txt", statbuf=0xadbf5c30)
     st_size =  0
     st_blksize =  1024
     st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    cfs_pathToFileName: path = "/snake.txt", fileName = "/snake.txt"
-    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/snake.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt"
+    st_atime = 0x 5dcf4dd2
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
+    cfs_pathToFileName: path = "/newAnimal.txt", fileName = "/newAnimal.txt"
+    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/newAnimal.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/newAnimal.txt"
 
 File is not present yet in cache. Making nodes...
 
-cfs_getMode(path="/snake.txt", statbuf=0xa00010f0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_getMode(path="/newAnimal.txt", statbuf=0x380021d0)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  19
+    st_ino =  12
     st_mode = 0 100664
     st_nlink =  1
     st_uid =  1100998
@@ -325,16 +174,16 @@ cfs_getMode(path="/snake.txt", statbuf=0xa00010f0)
     st_size =  0
     st_blksize =  1024
     st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
+    st_atime = 0x 5dcf4dd2
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_getDev(path="/snake.txt", statbuf=0xa0001190)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_getDev(path="/newAnimal.txt", statbuf=0x38002270)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  19
+    st_ino =  12
     st_mode = 0 100664
     st_nlink =  1
     st_uid =  1100998
@@ -343,15 +192,15 @@ cfs_getDev(path="/snake.txt", statbuf=0xa0001190)
     st_size =  0
     st_blksize =  1024
     st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
+    st_atime = 0x 5dcf4dd2
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_mkCacheNod(cachePath="/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt", mode=0100664, dev=0)
+cfs_mkCacheNod(cachePath="/home/wjb24/ECE566/ece566-project/example/cachedir/newAnimal.txt", mode=0100664, dev=0)
     open returned 5
     close returned 0
 
-cfs_open(path="/snake.txt", fi=0xad3f4ce0)
+cfs_open(path="/newAnimal.txt", fi=0x3f8e3ce0)
 , flags= 34817    NAS open returned 5
     Cache open returned 6
     fi:
@@ -360,29 +209,29 @@ cfs_open(path="/snake.txt", fi=0xad3f4ce0)
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a0001250
+    fh = 0x 00007f4538002330
     lock_owner = 0x 0000000000000000
 
-cfs_flush(path="/snake.txt", fi=0xadbf5ce0)
+cfs_flush(path="/newAnimal.txt", fi=0x3f0e2ce0)
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7ff3a0001250
+    fh_old = 0x 7f4538002330
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a0001250
-    lock_owner = 0x 3ac5617e02d501d2
+    fh = 0x 00007f4538002330
+    lock_owner = 0x 1526a64151544a55
 
-cfs_utime(path="/snake.txt", ubuf=0xad3f4aa0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_utime(path="/newAnimal.txt", ubuf=0x3f8e3aa0)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     utime returned 0
 
-cfs_getattr(path="/snake.txt", statbuf=0xad3f4b60)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_getattr(path="/newAnimal.txt", statbuf=0x3f8e3b60)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  19
+    st_ino =  12
     st_mode = 0 100664
     st_nlink =  1
     st_uid =  1100998
@@ -391,45 +240,45 @@ cfs_getattr(path="/snake.txt", statbuf=0xad3f4b60)
     st_size =  0
     st_blksize =  1024
     st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
+    st_atime = 0x 5dcf4dd2
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_flush(path="/snake.txt", fi=0xadbf5ce0)
+cfs_flush(path="/newAnimal.txt", fi=0x3f0e2ce0)
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7ff3a0001250
+    fh_old = 0x 7f4538002330
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a0001250
-    lock_owner = 0x 3ac5617e02d501d2
+    fh = 0x 00007f4538002330
+    lock_owner = 0x 1526a64151544a55
 
-cfs_release(path="/snake.txt", fi=0xad3f4ce0, nasFH=0x0000000000000005, cacheFH=0x0000000000000006)
+cfs_release(path="/newAnimal.txt", fi=0x3f8e3ce0, nasFH=0x0000000000000005, cacheFH=0x0000000000000006)
     fi:
     flags = 0x 00008801
-    fh_old = 0x 7ff3a0001250
+    fh_old = 0x 7f4538002330
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a0001250
+    fh = 0x 00007f4538002330
     lock_owner = 0x 0000000000000000
     Cache close returned 0
     NAS close returned 0
 
-cfs_opendir(path="/", fi=0xadbf5c20)
+cfs_opendir(path="/", fi=0x3f0e2c20)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    opendir returned 0x0x7ff3a800a6a0
+    opendir returned 0x0x7f4530009380
     fi:
     flags = 0x 00018800
     fh_old = 0x 00000000
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a800a6a0
+    fh = 0x 00007f4530009380
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/", statbuf=0xad3f4c00)
+cfs_getattr(path="/", statbuf=0x3f8e3c00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
@@ -443,105 +292,44 @@ cfs_getattr(path="/", statbuf=0xad3f4c00)
     st_size =  1024
     st_blksize =  1024
     st_blocks =  2
-    st_atime = 0x 5dcf42d5
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
+    st_atime = 0x 5dcf4957
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_readdir(path="/", buf=0xa80020a0, filler=0xae412d00, offset=0, fi=0xadbf5c20)
-    readdir returned 0x0x7ff3a800a6d0
-calling filler with name cat.txt
-calling filler with name boop.txt
+cfs_readdir(path="/", buf=0x30001050, filler=0x40100d00, offset=0, fi=0x3f0e2c20)
+    readdir returned 0x0x7f45300093b0
 calling filler with name .
-calling filler with name newt.txt
-calling filler with name sloop.txt
+calling filler with name newAnimal.txt
 calling filler with name lost+found
-calling filler with name snake.txt
-calling filler with name dog.txt
-calling filler with name monstah.txt
 calling filler with name ..
-calling filler with name bird.txt
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7ff3a800a6a0
+    fh_old = 0x 7f4530009380
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a800a6a0
+    fh = 0x 00007f4530009380
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/cat.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/cat.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/cat.txt"
+cfs_getattr(path="/newAnimal.txt", statbuf=0x3f8e3c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  13
+    st_ino =  12
     st_mode = 0 100664
     st_nlink =  1
     st_uid =  1100998
     st_gid =  1002
     st_rdev =  0
-    st_size =  21
+    st_size =  0
     st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcef630
-    st_mtime = 0x 5dcef6d7
-    st_ctime = 0x 5dcef6d7
+    st_blocks =  0
+    st_atime = 0x 5dcf4dd2
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_getattr(path="/boop.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/boop.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/boop.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  18
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  18
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf0b69
-    st_mtime = 0x 5dcf0b74
-    st_ctime = 0x 5dcf0b74
-
-cfs_getattr(path="/newt.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newt.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newt.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  14
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  13
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcefcde
-    st_mtime = 0x 5dcefcef
-    st_ctime = 0x 5dcefcef
-
-cfs_getattr(path="/sloop.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/sloop.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/sloop.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  16
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  12
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf08ae
-    st_mtime = 0x 5dcf0763
-    st_ctime = 0x 5dcf0763
-
-cfs_getattr(path="/lost+found", statbuf=0xad3f4c30)
+cfs_getattr(path="/lost+found", statbuf=0x3f0e2c30)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/lost+found", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/lost+found"
     lstat returned 0
     si:
@@ -559,26 +347,119 @@ cfs_getattr(path="/lost+found", statbuf=0xad3f4c30)
     st_mtime = 0x 5dcef4c1
     st_ctime = 0x 5dcef4c1
 
-cfs_getattr(path="/snake.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
+cfs_releasedir(path="/", fi=0x3f0e2c30)
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f4530009380
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f4530009380
+    lock_owner = 0x 0000000000000000
+
+cfs_getattr(path="/", statbuf=0x3f8e3c00)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
+    st_ino =  2
+    st_mode = 0 40755
+    st_nlink =  3
     st_uid =  1100998
     st_gid =  1002
     st_rdev =  0
-    st_size =  0
+    st_size =  1024
     st_blksize =  1024
-    st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
+    st_blocks =  2
+    st_atime = 0x 5dcf4dd4
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_getattr(path="/dog.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/dog.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/dog.txt"
+cfs_getattr(path="/.git", statbuf=0x3f0e2c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/.git", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/.git"
+    lstat returned -1
+    ERROR lstat: No such file or directory
+    si:
+    st_dev =  0
+    st_ino =  0
+    st_mode = 0 0
+    st_nlink =  0
+    st_uid =  0
+    st_gid =  0
+    st_rdev =  0
+    st_size =  0
+    st_blksize =  0
+    st_blocks =  0
+    st_atime = 0x 00000000
+    st_mtime = 0x 00000000
+    st_ctime = 0x 00000000
+
+cfs_getattr(path="/.git", statbuf=0x3f8e3c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/.git", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/.git"
+    lstat returned -1
+    ERROR lstat: No such file or directory
+    si:
+    st_dev =  0
+    st_ino =  0
+    st_mode = 0 0
+    st_nlink =  0
+    st_uid =  0
+    st_gid =  0
+    st_rdev =  0
+    st_size =  0
+    st_blksize =  0
+    st_blocks =  0
+    st_atime = 0x 00000000
+    st_mtime = 0x 00000000
+    st_ctime = 0x 00000000
+
+cfs_opendir(path="/", fi=0x3f0e2c20)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
+    opendir returned 0x0x7f4530009380
+    fi:
+    flags = 0x 00018800
+    fh_old = 0x 00000000
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f4530009380
+    lock_owner = 0x 0000000000000000
+
+cfs_getattr(path="/", statbuf=0x3f8e3c00)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
+    lstat returned 0
+    si:
+    st_dev =  1793
+    st_ino =  2
+    st_mode = 0 40755
+    st_nlink =  3
+    st_uid =  1100998
+    st_gid =  1002
+    st_rdev =  0
+    st_size =  1024
+    st_blksize =  1024
+    st_blocks =  2
+    st_atime = 0x 5dcf4dd4
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
+
+cfs_readdir(path="/", buf=0x300014e0, filler=0x40100d00, offset=0, fi=0x3f0e2c20)
+    readdir returned 0x0x7f45300093b0
+calling filler with name .
+calling filler with name newAnimal.txt
+calling filler with name lost+found
+calling filler with name ..
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f4530009380
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f4530009380
+    lock_owner = 0x 0000000000000000
+
+cfs_getattr(path="/newAnimal.txt", statbuf=0x3f8e3c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/newAnimal.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/newAnimal.txt"
     lstat returned 0
     si:
     st_dev =  1793
@@ -588,698 +469,107 @@ cfs_getattr(path="/dog.txt", statbuf=0xad3f4c30)
     st_uid =  1100998
     st_gid =  1002
     st_rdev =  0
-    st_size =  1892
-    st_blksize =  1024
-    st_blocks =  4
-    st_atime = 0x 5dcef604
-    st_mtime = 0x 5dcef5d1
-    st_ctime = 0x 5dcef5d1
-
-cfs_getattr(path="/monstah.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/monstah.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/monstah.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  17
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
     st_size =  0
     st_blksize =  1024
     st_blocks =  0
-    st_atime = 0x 5dcf0736
-    st_mtime = 0x 5dcf0736
-    st_ctime = 0x 5dcf0736
+    st_atime = 0x 5dcf4dd2
+    st_mtime = 0x 5dcf4dd2
+    st_ctime = 0x 5dcf4dd2
 
-cfs_getattr(path="/bird.txt", statbuf=0xad3f4c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/bird.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/bird.txt"
+cfs_getattr(path="/.gitignore", statbuf=0x3f0e2c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/.gitignore", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/.gitignore"
+    lstat returned -1
+    ERROR lstat: No such file or directory
+    si:
+    st_dev =  0
+    st_ino =  0
+    st_mode = 0 0
+    st_nlink =  0
+    st_uid =  0
+    st_gid =  0
+    st_rdev =  0
+    st_size =  0
+    st_blksize =  0
+    st_blocks =  0
+    st_atime = 0x 00000000
+    st_mtime = 0x 00000000
+    st_ctime = 0x 00000000
+
+cfs_getattr(path="/lost+found", statbuf=0x3f8e3c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/lost+found", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/lost+found"
     lstat returned 0
     si:
     st_dev =  1793
-    st_ino =  15
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
+    st_ino =  11
+    st_mode = 0 40700
+    st_nlink =  2
+    st_uid =  0
+    st_gid =  0
     st_rdev =  0
-    st_size =  10
+    st_size =  12288
     st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf0634
-    st_mtime = 0x 5dcf0647
-    st_ctime = 0x 5dcf0647
+    st_blocks =  24
+    st_atime = 0x 5dcef4c1
+    st_mtime = 0x 5dcef4c1
+    st_ctime = 0x 5dcef4c1
 
-cfs_releasedir(path="/", fi=0xad3f4c30)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a800a6a0
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a800a6a0
-    lock_owner = 0x 0000000000000000
+cfs_getattr(path="/lost+found/.git", statbuf=0x3f0e2c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/lost+found/.git", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/lost+found/.git"
+    lstat returned -1
+    ERROR lstat: Permission denied
+    si:
+    st_dev =  0
+    st_ino =  0
+    st_mode = 0 0
+    st_nlink =  0
+    st_uid =  0
+    st_gid =  0
+    st_rdev =  0
+    st_size =  0
+    st_blksize =  0
+    st_blocks =  0
+    st_atime = 0x 00000000
+    st_mtime = 0x 00000000
+    st_ctime = 0x 00000000
 
-cfs_opendir(path="/", fi=0xadbf5c20)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    opendir returned 0x0x7ff3a800a6a0
+cfs_getattr(path="/lost+found/.git", statbuf=0x3f8e3c30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/lost+found/.git", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/lost+found/.git"
+    lstat returned -1
+    ERROR lstat: Permission denied
+    si:
+    st_dev =  0
+    st_ino =  0
+    st_mode = 0 0
+    st_nlink =  0
+    st_uid =  0
+    st_gid =  0
+    st_rdev =  0
+    st_size =  0
+    st_blksize =  0
+    st_blocks =  0
+    st_atime = 0x 00000000
+    st_mtime = 0x 00000000
+    st_ctime = 0x 00000000
+
+cfs_opendir(path="/lost+found", fi=0x3f0e2c20)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/lost+found", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/lost+found"
+    opendir returned 0x(nil)
+    ERROR cfs_opendir opendir: Permission denied
     fi:
     flags = 0x 00018800
     fh_old = 0x 00000000
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a800a6a0
+    fh = 0x 0000000000000000
     lock_owner = 0x 0000000000000000
 
-cfs_getattr(path="/", statbuf=0xad3f4c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_readdir(path="/", buf=0xa8002120, filler=0xae412d00, offset=0, fi=0xadbf5c20)
-    readdir returned 0x0x7ff3a800a6d0
-calling filler with name cat.txt
-calling filler with name boop.txt
-calling filler with name .
-calling filler with name newt.txt
-calling filler with name sloop.txt
-calling filler with name lost+found
-calling filler with name snake.txt
-calling filler with name dog.txt
-calling filler with name monstah.txt
-calling filler with name ..
-calling filler with name bird.txt
+cfs_releasedir(path="/", fi=0x3f0e2c30)
     fi:
     flags = 0x 00000000
-    fh_old = 0x 7ff3a800a6a0
+    fh_old = 0x 7f4530009380
     writepage =  0
     direct_io =  0
     keep_cache =  0
-    fh = 0x 00007ff3a800a6a0
+    fh = 0x 00007f4530009380
     lock_owner = 0x 0000000000000000
-
-cfs_releasedir(path="/", fi=0xad3f4c30)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a800a6a0
-    writepage =  0
-
-cfs_getattr(path="/snake.txt", statbuf=0xadbf5c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  1024
-    st_blocks =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a800a6a0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-    lock_owner = 0x 0000000000000000
-
-cfs_opendir(path="/", fi=0xacbf3c20)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    opendir returned 0x0x7ff3a4000d80
-    fi:
-    flags = 0x 00018800
-    fh_old = 0x 00000000
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000d80
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/", statbuf=0xadbf5c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_readdir(path="/", buf=0xa4000bf0, filler=0xae412d00, offset=0, fi=0xad3f4c20)
-    readdir returned 0x0x7ff3a4000db0
-calling filler with name cat.txt
-calling filler with name boop.txt
-calling filler with name .
-calling filler with name newt.txt
-calling filler with name sloop.txt
-calling filler with name lost+found
-calling filler with name snake.txt
-calling filler with name dog.txt
-calling filler with name monstah.txt
-calling filler with name ..
-calling filler with name bird.txt
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a4000d80
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000d80
-    lock_owner = 0x 0000000000000000
-
-cfs_releasedir(path="/", fi=0xadbf5c30)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a4000d80
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000d80
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/", statbuf=0xad3f4c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    cfs_pathToFileName: path = "/snake.txt", fileName = "/snake.txt"
-    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/snake.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt"
-
-File is not present yet in cache. Making nodes...
-
-cfs_getMode(path="/snake.txt", statbuf=0xa4000e10)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  1024
-    st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_getDev(path="/snake.txt", statbuf=0xa4000eb0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  1024
-    st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_mkCacheNod(cachePath="/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt", mode=0100664, dev=0)
-    open returned -1
-    ERROR open: File exists
-
-cfs_open(path="/snake.txt", fi=0xacbf3ce0)
-, flags= 32769    NAS open returned 5
-    Cache open returned 6
-    fi:
-    flags = 0x 00008001
-    fh_old = 0x 00000000
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000f70
-    lock_owner = 0x 0000000000000000
-
-cfs_getxattr(path = "/snake.txt", name = "security.capability", value = 0x00000000, size = 0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lgetxattr returned -1
-    ERROR lgetxattr: No data available
-    cfs_pathToFileName: path = "/snake.txt", fileName = "/snake.txt"
-    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/snake.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt"
-
-cfs_truncate(path="/snake.txt", cachePath="/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt", newsize=0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    truncate returned 0
-    truncate returned 0
-
-cfs_getattr(path="/snake.txt", statbuf=0xad3f4b60)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  0
-    st_blksize =  1024
-    st_blocks =  0
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4793
-    st_ctime = 0x 5dcf4793
-
-cfs_flush(path="/snake.txt", fi=0xacbf3ce0)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a4000f70
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000f70
-    lock_owner = 0x b18abd063a05de17
-
-cfs_getxattr(path = "/snake.txt", name = "security.capab
-cfs_destroy(userdata=0x473e5260)
- 0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lgetxattr returned -1
-    ERROR lgetxattr: No data available
-
-Write aligned size: 1024, size 10, block size 1024
-
-cfs_write original(path="/snake.txt", buf=0xae818060, size=10, offset=0, fi=0xad3f4d50, nasFH = 0x 0000000000000005, cacheFH = 0x 0000000000000006)
-    fi:
-    flags = 0x 00008001
-    fh_old = 0x 7ff3a4000f70
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000f70
-    lock_owner = 0x 0000000000000000
-    pwrite returned 10
-
-cfs_getattr(path="/snake.txt", statbuf=0xa0001270)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  10
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4793
-    st_ctime = 0x 5dcf4793
-
-NAS Read for Cache Write(buf=0xa800a0e0, size=10, offset=0, fi=0xad3f4d50, nasFH = 0x 0000000000000005)
-    Reading for write to cache returned -1
-    ERROR Reading for write to cache: Bad file descriptor
-    cfs_pathToFileName: path = "/snake.txt", fileName = "/snake.txt"
-    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/snake.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt"
-
-cfs_cacheWrite(path="/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt", buf=0xa800a0e0, size=1024, offset=0, fi=0xad3f4d50, cacheFileHandle = 0x 0000000000000006)
-    fi:
-    flags = 0x 00008001
-    fh_old = 0x 7ff3a4000f70
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000f70
-    lock_owner = 0x 0000000000000000
-    pwrite returned 1024
-
-cfs_flush(path="/snake.txt", fi=0xacbf3ce0)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a4000f70
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000f70
-    lock_owner = 0x b18abd063a05de17
-
-cfs_release(path="/snake.txt", fi=0xadbf5ce0, nasFH=0x0000000000000005, cacheFH=0x0000000000000006)
-    fi:
-    flags = 0x 00008001
-    fh_old = 0x 7ff3a4000f70
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a4000f70
-    lock_owner = 0x 0000000000000000
-    Cache close returned 0
-    NAS close returned 0
-
-cfs_opendir(path="/", fi=0xad3f4c20)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    opendir returned 0x0x7ff3a0001390
-    fi:
-    flags = 0x 00018800
-    fh_old = 0x 00000000
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001390
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/", statbuf=0xacbf3c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_readdir(path="/", buf=0xa0001310, filler=0xae412d00, offset=0, fi=0xadbf5c20)
-    readdir returned 0x0x7ff3a00013c0
-calling filler with name cat.txt
-calling filler with name boop.txt
-calling filler with name .
-calling filler with name newt.txt
-calling filler with name sloop.txt
-calling filler with name lost+found
-calling filler with name snake.txt
-calling filler with name dog.txt
-calling filler with name monstah.txt
-calling filler with name ..
-calling filler with name bird.txt
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a0001390
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001390
-    lock_owner = 0x 0000000000000000
-
-cfs_releasedir(path="/", fi=0xadbf5c30)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a0001390
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001390
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/snake.txt", statbuf=0xacbf3c30)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  10
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4793
-    st_ctime = 0x 5dcf4793
-
-cfs_opendir(path="/", fi=0xad3f4c20)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    opendir returned 0x0x7ff3a0001410
-    fi:
-    flags = 0x 00018800
-    fh_old = 0x 00000000
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001410
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/", statbuf=0xadbf5c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_readdir(path="/", buf=0xa0001390, filler=0xae412d00, offset=0, fi=0xacbf3c20)
-    readdir returned 0x0x7ff3a0001440
-calling filler with name cat.txt
-calling filler with name boop.txt
-calling filler with name .
-calling filler with name newt.txt
-calling filler with name sloop.txt
-calling filler with name lost+found
-calling filler with name snake.txt
-calling filler with name dog.txt
-calling filler with name monstah.txt
-calling filler with name ..
-calling filler with name bird.txt
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a0001410
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001410
-    lock_owner = 0x 0000000000000000
-
-cfs_releasedir(path="/", fi=0xadbf5c30)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a0001410
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001410
-    lock_owner = 0x 0000000000000000
-
-cfs_getattr(path="/", statbuf=0xacbf3c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    cfs_pathToFileName: path = "/snake.txt", fileName = "/snake.txt"
-    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/snake.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt"
-
-File is not present yet in cache. Making nodes...
-
-cfs_getMode(path="/snake.txt", statbuf=0xa0001410)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  10
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4793
-    st_ctime = 0x 5dcf4793
-
-cfs_getDev(path="/snake.txt", statbuf=0xa00014b0)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/snake.txt", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/snake.txt"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  10
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4776
-    st_mtime = 0x 5dcf4793
-    st_ctime = 0x 5dcf4793
-
-cfs_mkCacheNod(cachePath="/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt", mode=0100664, dev=0)
-    open returned -1
-    ERROR open: File exists
-
-cfs_open(path="/snake.txt", fi=0xad3f4ce0)
-, flags= 32768    NAS open returned 5
-    Cache open returned 6
-    fi:
-    flags = 0x 00008000
-    fh_old = 0x 00000000
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001550
-    lock_owner = 0x 0000000000000000
-
-cfs_read original(path="/snake.txt", buf=0xa8002760, size=4096, offset=0, fi=0xadbf5ce0, nasFH = 0x 0000000000000005, cacheFH = 0x 0000000000000006)
-
-cfs_read aligned(path="/snake.txt", buf=0xa8003770, size=4096, offset=0, fi=0xadbf5ce0, nasFH = 0x 0000000000000005, cacheFH = 0x 0000000000000006)
-    fi:
-    flags = 0x 00008000
-    fh_old = 0x 7ff3a0001550
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001550
-    lock_owner = 0x 0000000000000000
-    Data miss:nas pread plus fill cache returned 10
-    cfs_pathToFileName: path = "/snake.txt", fileName = "/snake.txt"
-    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/snake.txt", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt"
-
-cfs_cacheWrite(path="/home/wjb24/ECE566/ece566-project/example/cachedir/snake.txt", buf=0xa8003770, size=4096, offset=0, fi=0xadbf5ce0, cacheFileHandle = 0x 0000000000000006)
-    fi:
-    flags = 0x 00008000
-    fh_old = 0x 7ff3a0001550
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001550
-    lock_owner = 0x 0000000000000000
-    pwrite returned 4096
-
-cfs_fgetattr(path="/snake.txt", statbuf=0xacbf3c00, fi=0xacbf3ce0)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a0001550
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001550
-    lock_owner = 0x 0000000000000000
-    si:
-    st_dev =  1793
-    st_ino =  19
-    st_mode = 0 100664
-    st_nlink =  1
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  10
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4798
-    st_mtime = 0x 5dcf4793
-    st_ctime = 0x 5dcf4793
-
-cfs_flush(path="/snake.txt", fi=0xad3f4ce0)
-    fi:
-    flags = 0x 00000000
-    fh_old = 0x 7ff3a0001550
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001550
-    lock_owner = 0x d9fb395c3efd8ca6
-
-cfs_release(path="/snake.txt", fi=0xadbf5ce0, nasFH=0x0000000000000005, cacheFH=0x0000000000000006)
-    fi:
-    flags = 0x 00008000
-    fh_old = 0x 7ff3a0001550
-    writepage =  0
-    direct_io =  0
-    keep_cache =  0
-    fh = 0x 00007ff3a0001550
-    lock_owner = 0x 0000000000000000
-    Cache close returned 0
-    NAS close returned 0
-
-cfs_getattr(path="/", statbuf=0xacbf3c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  1793
-    st_ino =  2
-    st_mode = 0 40755
-    st_nlink =  3
-    st_uid =  1100998
-    st_gid =  1002
-    st_rdev =  0
-    st_size =  1024
-    st_blksize =  1024
-    st_blocks =  2
-    st_atime = 0x 5dcf4779
-    st_mtime = 0x 5dcf4776
-    st_ctime = 0x 5dcf4776
-
-cfs_destroy(userdata=0xe30d3260)

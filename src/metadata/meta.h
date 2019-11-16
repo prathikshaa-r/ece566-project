@@ -11,7 +11,7 @@ struct LRU_block{
   int blk_offset;
 } typedef LRU_block;
 
-static size_t block_size = 0;
+static size_t meta_block_size = 0;
 static size_t cache_used_size = 0;
 
 void set_block_size(size_t blk_size);

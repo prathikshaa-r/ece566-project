@@ -70,10 +70,10 @@ int main(void) {
 }
 
 void set_block_size(size_t blk_size){
-  block_size = blk_size;
+  meta_block_size = blk_size;
   if (VERBOSE)
   {
-    printf("Block Size Set to %lu\n", block_size);
+    printf("Block Size Set to %lu\n", meta_block_size);
   }
 }
 
@@ -288,7 +288,7 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
   // Prepare stmt
   sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); 
   // Bind
-  sqlite3_bind_int64(stmt, 1, block_size);
+  sqlite3_bind_int64(stmt, 1, meta_block_size);
   sqlite3_bind_text(stmt, 2, filename, -1, SQLITE_STATIC);
   // STEP
   ret = sqlite3_step(stmt); 
@@ -307,7 +307,7 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
   /*-----------Update local_size in Files------------*/
 
   /*-------------Update cache_used_size--------------*/
-  cache_used_size += block_size;
+  cache_used_size += meta_block_size;
   /*-------------Update cache_used_size--------------*/
 
   if (VERBOSE) {
