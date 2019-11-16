@@ -100,7 +100,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_cachefs_OBJECTS = cachefs.$(OBJEXT) log.$(OBJEXT) \
-	cacheHelp.$(OBJEXT)
+	cacheHelp.$(OBJEXT) meta.$(OBJEXT)
 cachefs_OBJECTS = $(am_cachefs_OBJECTS)
 cachefs_LDADD = $(LDADD)
 cachefs_DEPENDENCIES =
@@ -120,6 +120,10 @@ DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_$(V))
@@ -255,7 +259,7 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-cachefs_SOURCES = cachefs.c log.c log.h params.h cacheHelp.c cacheHelp.h  metadata/meta.h
+cachefs_SOURCES = cachefs.c log.c log.h params.h cacheHelp.c cacheHelp.h metadata/meta.h metadata/meta.c
 AM_CFLAGS = -D_FILE_OFFSET_BITS=64 -I/usr/include/fuse
 LDADD = -lfuse -pthread -lsqlite3
 all: config.h
@@ -363,6 +367,7 @@ distclean-compile:
 include ./$(DEPDIR)/cacheHelp.Po
 include ./$(DEPDIR)/cachefs.Po
 include ./$(DEPDIR)/log.Po
+include ./$(DEPDIR)/meta.Po
 
 .c.o:
 	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -377,6 +382,20 @@ include ./$(DEPDIR)/log.Po
 #	$(AM_V_CC)source='$<' object='$@' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+meta.o: metadata/meta.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT meta.o -MD -MP -MF $(DEPDIR)/meta.Tpo -c -o meta.o `test -f 'metadata/meta.c' || echo '$(srcdir)/'`metadata/meta.c
+	$(AM_V_at)$(am__mv) $(DEPDIR)/meta.Tpo $(DEPDIR)/meta.Po
+#	$(AM_V_CC)source='metadata/meta.c' object='meta.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o meta.o `test -f 'metadata/meta.c' || echo '$(srcdir)/'`metadata/meta.c
+
+meta.obj: metadata/meta.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT meta.obj -MD -MP -MF $(DEPDIR)/meta.Tpo -c -o meta.obj `if test -f 'metadata/meta.c'; then $(CYGPATH_W) 'metadata/meta.c'; else $(CYGPATH_W) '$(srcdir)/metadata/meta.c'; fi`
+	$(AM_V_at)$(am__mv) $(DEPDIR)/meta.Tpo $(DEPDIR)/meta.Po
+#	$(AM_V_CC)source='metadata/meta.c' object='meta.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o meta.obj `if test -f 'metadata/meta.c'; then $(CYGPATH_W) 'metadata/meta.c'; else $(CYGPATH_W) '$(srcdir)/metadata/meta.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

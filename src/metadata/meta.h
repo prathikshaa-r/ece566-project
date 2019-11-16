@@ -16,14 +16,17 @@ static size_t cache_used_size = 0;
 
 void set_block_size(size_t blk_size);
 void init_cache_used_size(sqlite3 *db);
+void print_cache_used_size();
+size_t get_cache_used_size();
+
 size_t str_to_num(const char *str);
 
-LRU_block* init_lru_blk(){
-  LRU_block *lru_block = malloc(sizeof(LRU_block));
-  lru_block->filename = NULL;
-  lru_block->blk_offset=0;
-  return lru_block;
-}
+// LRU_block* init_lru_blk(){
+//   LRU_block *lru_block = malloc(sizeof(LRU_block));
+//   lru_block->filename = NULL;
+//   lru_block->blk_offset = 0;
+//   return lru_block;
+// }
 
 // callback function used to execute sql statements
 static int callback(void *NotUsed, int argc, char **argv, char **azColName);

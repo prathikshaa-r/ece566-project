@@ -291,7 +291,7 @@ target_alias =
 top_build_prefix = 
 top_builddir = .
 top_srcdir = .
-SUBDIRS = example html src src/metadata
+SUBDIRS = example html src
 EXTRA_DIST = autogen.sh index.html
 all: all-recursive
 

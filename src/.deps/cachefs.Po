@@ -73,9 +73,9 @@ cachefs.o: cachefs.c /usr/include/stdc-predef.h config.h params.h \
  /usr/include/unistd.h /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
- /usr/include/x86_64-linux-gnu/bits/unistd.h metadata/meta.h \
- /usr/include/sqlite3.h /usr/include/assert.h \
- /usr/include/x86_64-linux-gnu/sys/xattr.h log.h cacheHelp.h
+ /usr/include/x86_64-linux-gnu/bits/unistd.h \
+ /usr/include/x86_64-linux-gnu/sys/xattr.h log.h cacheHelp.h \
+ metadata/meta.h /usr/include/sqlite3.h /usr/include/assert.h
 
 /usr/include/stdc-predef.h:
 
@@ -267,14 +267,14 @@ params.h:
 
 /usr/include/x86_64-linux-gnu/bits/unistd.h:
 
-metadata/meta.h:
-
-/usr/include/sqlite3.h:
-
-/usr/include/assert.h:
-
 /usr/include/x86_64-linux-gnu/sys/xattr.h:
 
 log.h:
 
 cacheHelp.h:
+
+metadata/meta.h:
+
+/usr/include/sqlite3.h:
+
+/usr/include/assert.h:

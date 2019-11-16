@@ -43,15 +43,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "metadata/meta.h"
-
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
 #endif
 
 #include "log.h"
 #include "cacheHelp.h"
-
+#include "metadata/meta.h"
 
 //  All the paths I see are relative to the root of the mounted
 //  filesystem.  In order to get to the underlying filesystem, I need to
@@ -413,7 +411,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
     cfs_mkCacheNod(cachePath, myMode, myDev);
   }
   log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n, flags= %d", path, fi, fi->flags);
-
+  log_msg("\ncfs_open(flag bitwise: )\n", fi->flags & 0x3);
   //Make open calls to both the NAS and Cache
   //Return values are file descriptors for each file
   //fi flags are passed to the open call
@@ -1107,6 +1105,8 @@ int main(int argc, char *argv[]) {
   int fuse_stat;
   struct cfs_state *cfs_data;
 
+  sqlite3 *db;
+
   // cfsfs doesn't do any access checking on its own (the comment
   // blocks in fuse.h mention some of the functions that need
   // accesses checked -- but note there are other functions, like
@@ -1197,6 +1197,73 @@ int main(int argc, char *argv[]) {
 
 
   cfs_data->logfile = log_open();
+
+  /*-------------------Open Metadata Handle-------------------*/
+  if (VERBOSE)
+  {
+    printf("Starting Metadata Initialization...\n");
+  }
+  char metadata_file[PATH_MAX]; 
+  char meta_filename[PATH_MAX] = "Metadata-File.db";
+
+  printf("Hello!\n");
+
+  strcpy(metadata_file, cfs_data->cachedir);
+  strncat(metadata_file, "/Metadata-File.db", PATH_MAX);
+
+  if (VERBOSE)
+  {
+    printf("Metadata File Name: %s\n", metadata_file);
+  }  
+
+  open_db(metadata_file, &db);
+  int ret = create_tables(db);
+  if((VERBOSE)&&(ret ==-1)){
+    printf("Tables probably exist already!\n");
+  }
+
+  if(VERBOSE)
+  {
+    printf("Initializing LRU block...\n");
+  }
+  
+  //init_lru_blk();
+  if (VERBOSE)
+  {
+    print_cache_used_size();
+  }
+
+  set_block_size(1024);
+
+  // function to init cache_used_size 
+  if (VERBOSE)
+  {
+    printf("\n");
+  }
+  init_cache_used_size(db);
+  if (VERBOSE)
+  {
+    print_cache_used_size();
+  }
+  // insert new file into metadata
+  create_file(db, "newdir/hello/Hello.txt", 1234);
+  create_file(db, "newdir/hello/Test2.txt", 1234);
+  // function to create datablock entry
+  if (VERBOSE)
+  {
+    printf("Calling insert block...\n");
+  }
+  insert_block(db, "newdir/hello/Hello.txt", 1234);
+  insert_block(db, "newdir/hello/Hello.txt", 1578);
+
+  insert_block(db, "newdir/hello/Test2.txt", 1234);
+  insert_block(db, "newdir/hello/Test2.txt", 1578);
+
+
+  // function to update remote file size- call on close() &|or open()
+
+  // function to update block timestamp
+  /*-------------------Open Metadata Handle-------------------*/
 
   // turn over control to fuse
   fprintf(stderr, "about to call fuse_main\n");

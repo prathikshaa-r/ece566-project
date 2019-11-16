@@ -5,68 +5,75 @@
 #include "meta.h"
 
 
-int main(void) {
-  // printf("%s\n", sqlite3_libversion());
+// int main(void) {
+//   // printf("%s\n", sqlite3_libversion());
 
-  sqlite3 *db;
-  sqlite3_stmt *res;
-  char *sql;
-  char *remainder;
-  UNUSED(remainder);
+//   sqlite3 *db;
+//   sqlite3_stmt *res;
+//   char *sql;
+//   char *remainder;
+//   UNUSED(remainder);
 
-  // open database - either in memory or from file
-  open_db("Metadata-File.db", &db);
-  // check if tables exist
-  // else create the tables
-  int ret = create_tables(db);
-  if(ret == -1){
-    fprintf(stdout, "Tables probably exist already!\n");
-  }
+//   // open database - either in memory or from file
+//   open_db("Metadata-File.db", &db);
+//   // check if tables exist
+//   // else create the tables
+//   int ret = create_tables(db);
+//   if(ret == -1){
+//     fprintf(stdout, "Tables probably exist already!\n");
+//   }
   
-  printf("Initializing LRU block...\n");
-  init_lru_blk();
+//   printf("Initializing LRU block...\n");
+//   init_lru_blk();
 
-  set_block_size(1024);
+//   set_block_size(1024);
 
-  // function to init cache_used_size 
-  printf("\n");
-  init_cache_used_size(db);
-  printf("Cache Usage: %lu\n", cache_used_size);
+//   // function to init cache_used_size 
+//   printf("\n");
+//   init_cache_used_size(db);
+//   printf("Cache Usage: %lu\n", cache_used_size);
 
-  // insert new file into metadata
-  create_file(db, "newdir/hello/Hello.txt", 1234);
-  create_file(db, "newdir/hello/Test2.txt", 1234);
-  // function to create datablock entry
-  printf("Calling insert block...\n");
-  insert_block(db, "newdir/hello/Hello.txt", 1234);
-  insert_block(db, "newdir/hello/Hello.txt", 1578);
+//   // insert new file into metadata
+//   create_file(db, "newdir/hello/Hello.txt", 1234);
+//   create_file(db, "newdir/hello/Test2.txt", 1234);
+//   // function to create datablock entry
+//   printf("Calling insert block...\n");
+//   insert_block(db, "newdir/hello/Hello.txt", 1234);
+//   insert_block(db, "newdir/hello/Hello.txt", 1578);
 
-  insert_block(db, "newdir/hello/Test2.txt", 1234);
-  insert_block(db, "newdir/hello/Test2.txt", 1578);
+//   insert_block(db, "newdir/hello/Test2.txt", 1234);
+//   insert_block(db, "newdir/hello/Test2.txt", 1578);
 
-  printf("Cache Usage: %lu\n", cache_used_size);
+//   printf("Cache Usage: %lu\n", cache_used_size);
 
 
-  // function to update remote file size- call on close() &|or open()
+//   // function to update remote file size- call on close() &|or open()
 
-  // function to update block timestamp
+//   // function to update block timestamp
 
-  // function to delete file (and relevant data-blocks) - using FK cascade
+//   // function to delete file (and relevant data-blocks) - using FK cascade
 
-  // check file in cache
+//   // check file in cache
 
-  // check block in cache
+//   // check block in cache
 
-  // check blocks in cache
+//   // check blocks in cache
 
-  // close database
-  sqlite3_close(db);
+//   // close database
+//   sqlite3_close(db);
 
   
-  UNUSED(res);
-  UNUSED(sql);
+//   UNUSED(res);
+//   UNUSED(sql);
 
-  return EXIT_SUCCESS;
+//   return EXIT_SUCCESS;
+// }
+
+void print_cache_used_size(){
+  printf("Cache Usage: %lu\n", cache_used_size);
+}
+size_t get_cache_used_size(){
+  return cache_used_size;
 }
 
 void set_block_size(size_t blk_size){
