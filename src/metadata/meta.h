@@ -29,7 +29,7 @@ LRU_block* init_lru_blk();
 // callback function used to execute sql statements
 static int callback(void *NotUsed, int argc, char **argv, char **azColName);
 // open database, populates the db pointer with the opened database
-void open_db(char * db_name, sqlite3 ** db);
+int open_db(char * db_name, sqlite3 ** db);
 // create the FILES and DATABLOCKS database tables
 int create_tables(sqlite3 * db);
 

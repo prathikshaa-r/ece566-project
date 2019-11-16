@@ -27,7 +27,8 @@ int main(void) {
   // function to init cache_used_size 
   printf("\n");
   init_cache_used_size(db);
-  printf("Cache Usage: %lu\n", cache_used_size);
+
+  print_cache_used_size();
 
   // insert new file into metadata
   create_file(db, "newdir/hello/Hello.txt", 1234);
@@ -45,7 +46,9 @@ int main(void) {
   insert_blocks(db, "newdir/hello/Hello.txt", 4, blk_arr);
   free(blk_arr);
 
-  printf("Cache Usage: %lu\n", cache_used_size);
+  delete_file(db, "newdir/hello/Test2.txt");
+
+  print_cache_used_size();
 
   // function to update remote file size- call on close() &|or open()
 
@@ -149,8 +152,9 @@ static int callback(void *NotUsed, int argc, char **argv, char **ColName) {
 }
 
 // open database and return the database pointer
-void open_db(char * db_name, sqlite3 ** db){
+int open_db(char * db_name, sqlite3 ** db){
   int ret = sqlite3_open(db_name, db);
+  char *ErrMsg = 0;ma
 
   if (ret != SQLITE_OK) {
     fprintf(stderr, "Cannot open database: %s, \n", sqlite3_errmsg(*db));
@@ -158,6 +162,16 @@ void open_db(char * db_name, sqlite3 ** db){
 
     exit(EXIT_FAILURE);
   }
+
+  if (VERBOSE)
+  {
+    printf("Turning on forign keys pragma...\n");
+  }
+  ret = sqlite3_exec(*db, "PRAGMA foreign_keys=ON", NULL, 0, &ErrMsg);
+  if (ret != SQLITE_OK){
+      fprintf(stderr, "Open DB: Forign Key Pragma: SQL error: %s\n", ErrMsg);
+      sqlite3_free(ErrMsg);
+   } 
 
   if (VERBOSE) {
     printf("Opened database successfully!\n");
@@ -212,8 +226,6 @@ int create_tables(sqlite3 * db){
 int create_file(sqlite3* db, char * filename, size_t remote_size){
   // INSERT INTO FILES
   char *sql;
-  char *ErrMsg = 0;
-  UNUSED(ErrMsg);
   sqlite3_stmt *stmt;
 
   /*-----------Insert into Files------------*/
@@ -241,8 +253,7 @@ int create_file(sqlite3* db, char * filename, size_t remote_size){
   // check return code for status
    
   if (ret != SQLITE_OK){
-    fprintf(stderr, "Create File: Finalize: SQL error: %s\n", ErrMsg);
-    sqlite3_free(ErrMsg);
+    fprintf(stderr, "Create File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
   /*-----------Insert into Files------------*/
@@ -259,7 +270,6 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
   // Then update the local_size of the file
   // and update cache_size_used variable
   char *sql;
-  char *ErrMsg = 0;
   sqlite3_stmt *stmt;
 
   /*-----------Insert into Datablocks------------*/
@@ -282,12 +292,11 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
     printf("Insert Block: SQL Error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
-    ret = sqlite3_finalize(stmt);
+  ret = sqlite3_finalize(stmt);
   // check return code for status
-   
   if (ret != SQLITE_OK){
-    fprintf(stderr, "Insert Block: Finalize: SQL error: %s\n", ErrMsg);
-    sqlite3_free(ErrMsg);
+    fprintf(stderr, "Insert Block: Finalize: SQL error: %s\n", 
+      sqlite3_errmsg(db));
     return -1;
   }
   /*-----------Insert into Datablocks------------*/
@@ -311,8 +320,7 @@ int insert_block(sqlite3* db, char * filename, int blk_offset){
   // check return code for status
    
   if (ret != SQLITE_OK){
-    fprintf(stderr, "Insert Block: Finalize: SQL error: %s\n", ErrMsg);
-    sqlite3_free(ErrMsg);
+    fprintf(stderr, "Insert Block: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
   /*-----------Update local_size in Files------------*/
@@ -337,15 +345,63 @@ int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr
   return 0;
 }
 
+int delete_file(sqlite3* db, char * filename){
+  // DELETE FILE
+  char *sql;
+  sqlite3_stmt *stmt;
+
+  /*-----------Delete from Files------------*/
+  sql = "SELECT local_size FROM Files WHERE relative_path=?1;"
+        "DELETE FROM Files WHERE relative_path = ?1;";
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, (const char**)&sql); // Do the select
+  // Bind
+  sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
+  // STEP
+  int ret = sqlite3_step(stmt); 
+  cache_used_size -= sqlite3_column_int64(stmt, 0);
+  if (VERBOSE)
+  {
+    print_cache_used_size();
+  }
+  ret = sqlite3_step(stmt);
+  if (ret != SQLITE_DONE) {
+    printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+  sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
+  ret = sqlite3_step(stmt);
+  if (ret != SQLITE_DONE) {
+    printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+   
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Delete File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Delete from Files------------*/
+
+  if (VERBOSE) {
+    fprintf(stdout, "File %s deleted.\n", filename);
+  }
+  return 0;
+}
+
 int delete_block(sqlite3* db, char * filename, int blk_offset){
   return 0;
 }
-
-
-int delete_file(sqlite3* db, char * filename){
-  return 0;
-}
-
 
 int update_lru_blk(sqlite3* db, char * filename, int blk_offset){
   return 0;
@@ -355,4 +411,20 @@ int update_blk_time(sqlite3* db, char * filename, int blk_offset){
   return 0;
 }
 
+// for(int col=0; col<sqlite3_column_count(stmt); col++) {
+//     // Note that by using sqlite3_column_text, sqlite will coerce the value into a string
+//     printf("\tColumn %s(%i): '%s'\n",
+//       sqlite3_column_name(stmt, col), col,
+//       sqlite3_column_text(stmt, col));
+//   }
 
+// while(SQLITE_ROW == (rc = sqlite3_step(select_stmt))) {
+//     int col;
+//     printf("Found row\n");
+//     for(col=0; col<sqlite3_column_count(select_stmt); col++) {
+//       // Note that by using sqlite3_column_text, sqlite will coerce the value into a string
+//       printf("\tColumn %s(%i): '%s'\n",
+//         sqlite3_column_name(select_stmt, col), col,
+//         sqlite3_column_text(select_stmt, col));
+//     }
+//   }

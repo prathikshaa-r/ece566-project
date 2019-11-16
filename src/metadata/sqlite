@@ -29,7 +29,7 @@ UPDATE Files SET local_size = local_size + ?1 WHERE relative_path = ?2;
 
 SELECT SUM(local_size) FROM Files;
 
-DELETE FROM Files WHERE relative_path = ?;
+SELECT local_size FROM Files WHERE relative_path=?; DELETE FROM Files WHERE relative_path = ?;
 DELETE FROM Datablocks WHERE
  file_id=(SELECT file_id from files WHERE relative_path=%s);
 
