@@ -46,6 +46,7 @@ int main(void) {
   insert_blocks(db, "newdir/hello/Hello.txt", 4, blk_arr);
   free(blk_arr);
 
+  // function to delete file (and relevant data-blocks) - using FK cascade
   delete_file(db, "newdir/hello/Test2.txt");
   delete_block(db, "newdir/hello/Hello.txt", 2134);
 
@@ -54,8 +55,6 @@ int main(void) {
   // function to update remote file size- call on close() &|or open()
 
   // function to update block timestamp
-
-  // function to delete file (and relevant data-blocks) - using FK cascade
 
   // check file in cache
 
@@ -468,9 +467,61 @@ int delete_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr
   return 0;
 }
 
-int is_file_in_cache(sqlite3* db, char * filename){
+int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
+  char *sql;
+  sqlite3_stmt *stmt;
 
-  return 0;
+  /*-----------Delete from Files------------*/
+  sql = "SELECT local_size FROM Files WHERE relative_path=?1;;
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, (const char**)&sql); // Do the select
+  // Bind
+  sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
+  // STEP
+  int ret = sqlite3_step(stmt); 
+  cache_used_size -= sqlite3_column_int64(stmt, 0);
+  if (VERBOSE)
+  {
+    print_cache_used_size();
+  }
+  ret = sqlite3_step(stmt);
+  if (ret != SQLITE_DONE) {
+    printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+  sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
+  ret = sqlite3_step(stmt);
+  if (ret != SQLITE_DONE) {
+    printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+   
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Delete File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Delete from Files------------*/
+
+  if (VERBOSE) {
+    fprintf(stdout, "File %s deleted.\n", filename);
+  }
+
+  // if(SQLITE_ROW != (rc = sqlite3_step(select_stmt)))
+  // return 0 //False
+
+  // if row, get get the 
+  return 1;
 }
 
 int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
