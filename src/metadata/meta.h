@@ -41,7 +41,13 @@ int delete_file(sqlite3* db, char * filename);
 // inserts one block and several blocks into database
 int insert_block(sqlite3* db, char * filename, size_t blk_offset);
 int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
+
+
 // delete evicted block/blocks from file
+/*
+inputs: filename, blk_offset to delete
+return value: check for -1 (indicating failure) or 0 (indicating success)
+*/
 int delete_block(sqlite3* db, char * filename, size_t blk_offset);
 int delete_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
 

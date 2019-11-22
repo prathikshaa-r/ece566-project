@@ -315,7 +315,7 @@ int insert_block(sqlite3* db, char * filename, size_t blk_offset){
   // STEP
   ret = sqlite3_step(stmt); 
   if (ret != SQLITE_DONE) {
-    printf("Create File: SQL Error: %s\n", sqlite3_errmsg(db));
+    printf("Insert Block: SQL Error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
   ret = sqlite3_finalize(stmt);
@@ -425,17 +425,32 @@ int delete_block(sqlite3* db, char * filename, size_t blk_offset){
   sqlite3_bind_int64(stmt, 1, blk_offset);
   sqlite3_bind_text(stmt, 2, filename, -1, SQLITE_STATIC);
   // STEP
-  int ret = sqlite3_step(stmt); 
-  cache_used_size -= meta_block_size; // for each deleted block reduce space used
-  if (VERBOSE)
-  {
-    print_cache_used_size();
-  }
+  int ret = sqlite3_step(stmt);
+
   if (ret != SQLITE_DONE) {
     printf("Delete Block: SQL Error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
 
+  ret = sqlite3_finalize(stmt);
+   
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Delete Block: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Delete from Datablocks------------*/
+  sql = "UPDATE Files SET local_size = local_size - ?1 WHERE relative_path = ?2;";
+   // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); 
+  // Bind
+  sqlite3_bind_int64(stmt, 1, meta_block_size);
+  sqlite3_bind_text(stmt, 2, filename, -1, SQLITE_STATIC);
+  // STEP
+  ret = sqlite3_step(stmt); 
+  if (ret != SQLITE_DONE) {
+    printf("Delete Block: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
   ret = sqlite3_finalize(stmt);
   // check return code for status
    
@@ -443,8 +458,15 @@ int delete_block(sqlite3* db, char * filename, size_t blk_offset){
     fprintf(stderr, "Delete Block: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
-  /*-----------Delete from Datablocks------------*/
+  /*---------Reduce local_size in Files----------*/
 
+  /*---------Reduce local_size in Files----------*/
+  // If block deletion successful, reduce used space count
+  cache_used_size -= meta_block_size;
+  if (VERBOSE)
+  {
+    print_cache_used_size();
+  }
   if (VERBOSE) {
     fprintf(stdout, "Block %s: %lu deleted.\n", filename, blk_offset);
   }
@@ -470,9 +492,10 @@ int delete_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr
 int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
   char *sql;
   sqlite3_stmt *stmt;
+  int ret;
 
-  /*-----------Delete from Files------------*/
-  sql = "SELECT local_size FROM Files WHERE relative_path=?1;;
+  /*-----------Check if file is in cache------------*/
+  sql = "SELECT file_id FROM Files WHERE relative_path=?1;"; // select anything and check if any row is returned
   /* 
   Prepare
   Bind
@@ -480,30 +503,24 @@ int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
   Finalize
   */
   // Prepare stmt
-  sqlite3_prepare_v2(db, sql, -1, &stmt, (const char**)&sql); // Do the select
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); // Do the select
   // Bind
   sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
-  // STEP
-  int ret = sqlite3_step(stmt); 
-  cache_used_size -= sqlite3_column_int64(stmt, 0);
-  if (VERBOSE)
-  {
-    print_cache_used_size();
+  // Check if rows are returned on execution
+  if(SQLITE_ROW != (ret = sqlite3_step(stmt))){
+    printf("Return value is not SLQITE_ROW\n");
+    if(SQLITE_DONE == ret){
+      printf("No rows returned...\n");
+      return 0;
+    }
   }
+  // step to next row?
   ret = sqlite3_step(stmt);
   if (ret != SQLITE_DONE) {
     printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
-
-  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-  sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
-  ret = sqlite3_step(stmt);
-  if (ret != SQLITE_DONE) {
-    printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
-    return -1;
-  }
-
+  // destructor of the sql stmt
   ret = sqlite3_finalize(stmt);
   // check return code for status
    
@@ -511,16 +528,12 @@ int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
     fprintf(stderr, "Delete File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
-  /*-----------Delete from Files------------*/
+  /*-----------Check if file is in cache------------*/
 
   if (VERBOSE) {
     fprintf(stdout, "File %s deleted.\n", filename);
   }
-
-  // if(SQLITE_ROW != (rc = sqlite3_step(select_stmt)))
-  // return 0 //False
-
-  // if row, get get the 
+  // file found
   return 1;
 }
 
