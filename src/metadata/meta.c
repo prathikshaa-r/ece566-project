@@ -4,7 +4,7 @@
 
 #include "meta.h"
 
-/*
+
 int main(void) {
   // printf("%s\n", sqlite3_libversion());
 
@@ -81,8 +81,6 @@ int main(void) {
 
   return EXIT_SUCCESS;
 }
-*/
-
 
 LRU_block* init_lru_blk(){
   LRU_block *lru_block = malloc(sizeof(LRU_block));
@@ -621,6 +619,13 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
     bool_arr[i] = is_blk_in_cache(db, filename, blk_arr[i]);
   }
   return 0;
+}
+
+
+int write_blks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
+  // are_blks_in_cache()
+  // YES->update_blks()
+  // NO ->create_blks()
 }
 
 int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
