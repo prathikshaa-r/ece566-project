@@ -61,6 +61,10 @@ int main(void) {
   printf("%d\n", is_file_in_cache(db, "newdir/hello/Test2.txt"));
 
   // check block in cache
+  printf("%d\n", is_blk_in_cache(db, "newdir/hello/Hello.txt", 1234));
+  printf("%d\n", is_blk_in_cache(db, "newdir/hello/Hello.txt", 1024));
+  printf("%d\n", is_blk_in_cache(db, "newdir/hello/Test2.txt", 1234));
+
 
   // check blocks in cache
 
@@ -541,6 +545,62 @@ int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
   // file found
   return 1;
 }
+
+int is_blk_in_cache(sqlite3* db, char * filename, size_t blk_offset){
+  char *sql;
+  sqlite3_stmt *stmt;
+  int ret;
+
+  /*-----------Check if block is in cache------------*/
+  sql = "SELECT block_id FROM Datablocks "
+        "WHERE blk_start_offset=?1 AND "
+        "file_id=(SELECT file_id from files WHERE relative_path=?2);"; // select anything and check if any row is returned
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); // Do the select
+  // Bind
+  sqlite3_bind_int64(stmt, 1, blk_offset);
+  sqlite3_bind_text(stmt, 2, filename, -1, SQLITE_STATIC);
+  // Check if rows are returned on execution
+  if(SQLITE_ROW != (ret = sqlite3_step(stmt))){
+    if(SQLITE_DONE == ret){
+      // No rows returned => File not found
+      return 0;
+    }
+    else {
+      printf("Check block: SQL Error: %s\n", sqlite3_errmsg(db));
+      return -1; // SQL Error
+    }
+  }
+  // step to next row?
+  ret = sqlite3_step(stmt);
+  if (ret != SQLITE_DONE) {
+    printf("Check block: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  // destructor of the sql stmt
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+   
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Check block: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Check if block is in cache------------*/
+
+  if (VERBOSE) {
+    fprintf(stdout, "Block %s:%lu found.\n", filename, blk_offset);
+  }
+  // file found
+  return 1;
+}
+
+
 
 int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
   return 0;
