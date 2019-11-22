@@ -623,6 +623,7 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
 
 
 int write_blks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
+  int *bool_arr = (int*)malloc(sizeof(*bool_arr)*num_blks);
   // are_blks_in_cache()
   // YES->update_blks()
   // NO ->create_blks()
