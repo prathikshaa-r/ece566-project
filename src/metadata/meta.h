@@ -38,24 +38,53 @@ int create_file(sqlite3* db, char * filename, size_t remote_size);
 // remove deleted file
 int delete_file(sqlite3* db, char * filename);
 
-// inserts new block into database
-int insert_block(sqlite3* db, char * filename, int blk_offset);
-// inserts several blocks into database
+// inserts one block and several blocks into database
+int insert_block(sqlite3* db, char * filename, size_t blk_offset);
 int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
-// delete evicted block from file
-int delete_block(sqlite3* db, char * filename, int blk_offset);
+
+
+// delete evicted block/blocks from file
+/*
+inputs: filename, blk_offset to delete
+return value: check for -1 (indicating failure) or 0 (indicating success)
+*/
+int delete_block(sqlite3* db, char * filename, size_t blk_offset);
+int delete_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
 
 // change what the LRU block points to
-int update_lru_blk(sqlite3* db, char * filename, int blk_offset);
+int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset);
 // call on every write to block
-int update_blk_time(sqlite3* db, char * filename, int blk_offset);
+int update_blk_time(sqlite3* db, char * filename, size_t blk_offset);
 
-int is_file_in_cache(sqlite3* db, char * filename);
-int is_blk_in_cache(sqlite3* db, char * filename, int blk_offset);
+int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */);
+int is_blk_in_cache(sqlite3* db, char * filename, size_t blk_offset);
 
 // blk array should be malloced appropriately and will be used to set boolean 
 // blk_arr = [] of blk_offsets
 int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks, 
 	size_t *blk_arr, int *bool_arr);
+
+/*
+inputs:
+* db: database handle
+* num_blks: num of blocks to evict
+* filenames: filenames array corresponding to each evicted block
+*	-MUST BE MALLOCED BY USER
+* blk_offsets: array of each blk evicted from the corresponding file in filenames
+*	-MUST BE MALLOCED BY USER
+
+return value:
+* The number of blocks actually evicted. Will be less than or equal to num_blks.
+* Returns -1 in case of error and printts error to stderr.
+
+Desc:
+* Evict the LRU num_blks, # of blks.
+*/
+ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames, size_t *blk_offsets);
+
+/*
+Alternately to evict LRU file
+*/
+int evict_file(sqlite3 *db, char **filename);
 
 #endif // __META_H_ 
