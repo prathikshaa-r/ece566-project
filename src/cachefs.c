@@ -51,6 +51,8 @@
 #include "cacheHelp.h"
 #include "metadata/meta.h"
 
+sqlite3 *metaDataBase;
+
 //  All the paths I see are relative to the root of the mounted
 //  filesystem.  In order to get to the underlying filesystem, I need to
 //  have the mountpoint.  I'll save it away early on in main(), and then
@@ -100,11 +102,11 @@ static void cfs_pathToFileName(char pathFileName[PATH_MAX], const char *path) {
  * ignored.  The 'st_ino' field is ignored except if the 'use_ino'
  * mount option is given.
  */
-int cfs_getattr(const char *path, struct stat *statbuf) {
+int cfs_getNASattr(const char *path, struct stat *statbuf) {
   int retstat = 0;
   char nasPath[PATH_MAX];
 
-  log_msg("\ncfs_getattr(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
+  log_msg("\ncfs_getNASattr(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
   cfs_fullNasPath(nasPath, path);
 
   retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
@@ -114,53 +116,22 @@ int cfs_getattr(const char *path, struct stat *statbuf) {
   return retstat;
 }
 
-time_t cfs_getTimestamp(const char *path)
-{
-  struct stat *statbuf = malloc(sizeof(struct stat));
+int cfs_getCacheattr(const char *path, struct stat *statbuf) {
   int retstat = 0;
-  char nasPath[PATH_MAX];
+  char cacheFileName[PATH_MAX], cachePath[PATH_MAX];
 
-  log_msg("\ncfs_getTimeStamp(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
-  cfs_fullNasPath(nasPath, path);
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_fullCachePath(cachePath, cacheFileName);
 
-  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
+  log_msg("\ncfs_getCacheattr(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
+
+  retstat = log_syscall("lstat", lstat(cachePath, statbuf), 0);
 
   log_stat(statbuf);
 
-  return statbuf->st_mtime;
+  return retstat;
 }
 
-mode_t cfs_getMode(const char *path)
-{
-  struct stat *statbuf = malloc(sizeof(struct stat));
-  int retstat = 0;
-  char nasPath[PATH_MAX];
-
-  log_msg("\ncfs_getMode(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
-  cfs_fullNasPath(nasPath, path);
-
-  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
-
-  log_stat(statbuf);
-
-  return statbuf->st_mode;
-}
-
-dev_t cfs_getDev(const char *path)
-{
-  struct stat *statbuf = malloc(sizeof(struct stat));
-  int retstat = 0;
-  char nasPath[PATH_MAX];
-
-  log_msg("\ncfs_getDev(path=\"%s\", statbuf=0x%08x)\n", path, statbuf);
-  cfs_fullNasPath(nasPath, path);
-
-  retstat = log_syscall("lstat", lstat(nasPath, statbuf), 0);
-
-  log_stat(statbuf);
-
-  return statbuf->st_rdev;
-}
 /** Read the target of a symbolic link
  *
  * The buffer should be filled with a null terminated string.  The
@@ -242,6 +213,8 @@ int cfs_unlink(const char *path) {
 
   cfs_fullNasPath(nasPath, path);
   log_msg("cfs_unlink(nasPath=\"%s\", cachePath=\"%s\")\n", nasPath, cachePath);
+
+  delete_file(metaDataBase, cacheFileName);//remove file from metadata file
   log_syscall("Cache unlink", unlink(cachePath), 0);
   return log_syscall("NAS unlink", unlink(nasPath), 0);
 }
@@ -262,25 +235,41 @@ int cfs_rmdir(const char *path) {
 // while the 'link' is the link itself.  So we need to leave the path
 // unaltered, but insert the link into the mounted directory.
 int cfs_symlink(const char *path, const char *link) {
-  char flink[PATH_MAX];
+  char nasLink[PATH_MAX];
+  char cacheFileName[PATH_MAX], cachePath[PATH_MAX];
+  char cacheLinkName[PATH_MAX], cacheLinkPath[PATH_MAX];
 
   log_msg("\ncfs_symlink(path=\"%s\", link=\"%s\")\n", path, link);
-  cfs_fullNasPath(flink, link);
+  cfs_fullNasPath(nasLink, link);
 
-  return log_syscall("symlink", symlink(path, flink), 0);
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_pathToFileName(cacheLinkName, link);
+  cfs_fullCachePath(cachePath, cacheFileName);
+  cfs_fullCachePath(cacheLinkPath, cacheLinkName);
+
+  log_syscall("Cache symlink", symlink(cachePath, cacheLinkPath), 0);
+  return log_syscall("NAS symlink", symlink(path, nasLink), 0);
 }
 
 /** Rename a file */
 // both path and newpath are fs-relative
 int cfs_rename(const char *path, const char *newpath) {
-  char nasPath[PATH_MAX];
-  char fnewpath[PATH_MAX];
+  char nasPath[PATH_MAX], nasNewPath[PATH_MAX];
+  char cacheFileName[PATH_MAX], cachePath[PATH_MAX];
+  char cacheNewName[PATH_MAX], cacheNewPath[PATH_MAX];
 
   log_msg("\ncfs_rename(nasPath=\"%s\", newpath=\"%s\")\n", path, newpath);
   cfs_fullNasPath(nasPath, path);
-  cfs_fullNasPath(fnewpath, newpath);
+  cfs_fullNasPath(nasNewPath, newpath);
 
-  return log_syscall("rename", rename(nasPath, fnewpath), 0);
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_pathToFileName(cacheNewName, newpath);
+
+  cfs_fullCachePath(cachePath, cacheFileName);
+  cfs_fullCachePath(cacheNewPath, cacheNewName);
+
+  log_syscall("Cache rename", rename(cachePath, cacheNewPath), 0);
+  return log_syscall("NAS rename", rename(nasPath, nasNewPath), 0);
 }
 
 /** Create a hard link to a file */
@@ -336,20 +325,25 @@ int cfs_truncate(const char *path, off_t newsize) {
   log_msg("\ncfs_truncate(path=\"%s\", cachePath=\"%s\", newsize=%lld)\n", path, cachePath, newsize);
   cfs_fullNasPath(nasPath, path);
 
-  log_syscall("truncate", truncate(cachePath, newsize),0);
-  return log_syscall("truncate", truncate(nasPath, newsize), 0);
+  log_syscall("Cache truncate", truncate(cachePath, newsize),0);
+  return log_syscall("NAS truncate", truncate(nasPath, newsize), 0);
 }
 
 /** Change the access and/or modification times of a file */
 /* note -- I'll want to change this as soon as 2.6 is in debian testing */
 int cfs_utime(const char *path, struct utimbuf *ubuf) {
   char nasPath[PATH_MAX];
+  char cacheFileName[PATH_MAX];
+  char cachePath[PATH_MAX];
 
-
-  log_msg("\ncfs_utime(path=\"%s\", ubuf=0x%08x)\n", path, ubuf);
   cfs_fullNasPath(nasPath, path);
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_fullCachePath(cachePath, cacheFileName);
 
-  return log_syscall("utime", utime(nasPath, ubuf), 0);
+  log_msg("\ncfs_utime(path=\"%s\", CachePath=\"%s\", ubuf=0x%08x)\n", path, cachePath, ubuf);
+  
+  log_syscall("Cache utime", utime(cachePath, ubuf), 0);
+  return log_syscall("NAS utime", utime(nasPath, ubuf), 0);
 }
 
 
@@ -369,6 +363,7 @@ int cfs_mkCacheNod(const char *cachePath, mode_t mode, dev_t dev)
     retstat =
         log_syscall("open", open(cachePath, O_CREAT | O_EXCL | O_WRONLY, mode), 0);
     if (retstat >= 0)
+
       retstat = log_syscall("close", close(retstat), 0);
   } else if (S_ISFIFO(mode))
     retstat = log_syscall("mkfifo", mkfifo(cachePath, mode), 0);
@@ -400,16 +395,6 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   cfs_pathToFileName(cacheFileName, path);//convert path into the name of the file in our cache by removing "\"
   cfs_fullCachePath(cachePath, cacheFileName);
 
-  bool presentInCache = false;
-  //presentInCache = is_file_in_cache(cacheMeta, cacheFileName); //---- Uncomment when implemented
-
-  if(!presentInCache)//create a new file in the cache dir
-  {
-    log_msg("\nFile is not present yet in cache. Making nodes...\n");
-    mode_t myMode = cfs_getMode(path);
-    dev_t myDev = cfs_getDev(path);
-    cfs_mkCacheNod(cachePath, myMode, myDev);
-  }
   log_msg("\ncfs_open(path=\"%s\", fi=0x%08x)\n, flags= %d", path, fi, fi->flags);
   log_msg("\ncfs_open(flag bitwise: %d)\n", fi->flags & 0x3);
   //Make open calls to both the NAS and Cache
@@ -417,7 +402,6 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   //fi flags are passed to the open call
   //
   //00- RD 01-WOnly 10-RW
-  fi->fh = (uint64_t)malloc(sizeof(struct dualFileHandle));
   if((fi->flags & 0x3) == 1)//if write only, chang to read write
   {
     nasFileDescriptor = log_syscall("NAS open", open(nasPath, O_RDWR), 0);
@@ -425,6 +409,32 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   else
   {
     nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);//
+  }
+
+
+  bool presentInCache = false;
+  struct stat nasFileInfo;
+  cfs_getNASattr(path, &nasFileInfo);
+  presentInCache = false;//is_file_in_cache(metaDataBase, cacheFileName);// --Uncomment
+
+  struct stat cacheFileInfo;
+  if(presentInCache)//check up to dateness 
+  {
+    cfs_getCacheattr(path, &cacheFileInfo);
+    if(cacheFileInfo.st_mtime < nasFileInfo.st_mtime)//NAS file has been modifed more recently, need to scrap data 
+    {
+      log_msg("\nCache file is behind NAS, deleting cache file...\n");
+      delete_file(metaDataBase, cacheFileName);//remove file from metadata file
+      log_syscall("Cache unlink", unlink(cachePath), 0);
+      presentInCache = false;
+    }
+  }
+
+  if(!presentInCache)//create a new file in the cache dir
+  {
+    log_msg("\nFile is not present yet in cache. Making node and inserting into database...\n");
+    create_file(metaDataBase, cacheFileName, nasFileInfo.st_size);
+    cfs_mkCacheNod(cachePath, nasFileInfo.st_mode, nasFileInfo.st_dev);
   }
   cacheFileDescriptor = log_syscall("Cache open", open(cachePath, O_RDWR), 0);
 
@@ -452,6 +462,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 //Also called by cfs_write when the file is in cache, has same function
 int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
+  int retstat;
   char cachePath[PATH_MAX];
   cfs_fullCachePath(cachePath, cacheFileName);
 
@@ -461,7 +472,7 @@ int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_
       "\ncfs_cacheWrite(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, cacheFileHandle = 0x % 016llx)\n",
       cachePath, buf, size, offset, fi, dualFH->cacheFH);
 
-  log_fi(fi);
+  log_fi(fi); 
 
   return log_syscall("pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
 }
@@ -535,7 +546,7 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
     retstat = log_syscall("Data hit:cache pread", pread(dualFH->cacheFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
   }
   memcpy(buf, cacheBuf+offset-lowerOffset, size);//write to buffer the requested data (offset-lowerOffset will bump up cacheBuf to where the real data starts)
-
+  free((void*)cacheBuf);
   return retstat;
 }
 
@@ -574,8 +585,10 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   log_fi(fi);
 
   retstat = log_syscall("pwrite", pwrite(dualFH->nasFH, buf, size, offset), 0);//write to NAS here
-  struct stat *nasAttr = malloc(sizeof(struct stat));
-  cfs_getattr(path, nasAttr);
+
+  //---------------Cache Aspect of Writes---------------//
+  struct stat nasAttr;
+  cfs_getNASattr(path, &nasAttr);
 
   //Check if file is present in cache, and if so write to it using cacheWrite
   bool presentInCache = true;
@@ -584,9 +597,9 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   {
     char* cacheBuf = malloc(alignedSize*sizeof(char));
     size_t nasReadSize = alignedSize;
-    if(nasReadSize+lowerOffset > nasAttr->st_size)
+    if(nasReadSize+lowerOffset > nasAttr.st_size)
     {
-	nasReadSize = nasAttr->st_size-lowerOffset;	    
+      nasReadSize = nasAttr.st_size-lowerOffset;     
     }
     log_msg(
         "\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
@@ -595,8 +608,8 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
     char cacheFileName[PATH_MAX];
     cfs_pathToFileName(cacheFileName, path);
     cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
+    free((void*)cacheBuf);
   }
-
   return retstat;
 }
 
@@ -678,6 +691,16 @@ int cfs_release(const char *path, struct fuse_file_info *fi) {
   // We need to close the file.  Had we allocated any resources
   // (buffers etc) we'd need to free them here as well.
   //Closing file in cache as well
+  char cacheFileName[PATH_MAX], cachePath[PATH_MAX], fallocateCall[PATH_MAX];
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_fullCachePath(cachePath, cacheFileName);
+
+  strcpy(fallocateCall,"fallocate -d ");
+  strncat(fallocateCall, cachePath, PATH_MAX);
+
+  log_msg("\nFallocate call: %s\n", fallocateCall);
+
+  log_syscall("Cache digging", system(fallocateCall), 0);
   log_syscall("Cache close", close(dualFH->cacheFH), 0);
   nasClose = log_syscall("NAS close", close(dualFH->nasFH), 0);
   free((void *)fi->fh);
@@ -1042,7 +1065,7 @@ int cfs_fgetattr(const char *path, struct stat *statbuf,
   // special case of a path of "/", I need to do a getattr on the
   // underlying root directory instead of doing the fgetattr().
   if (!strcmp(path, "/"))
-    return cfs_getattr(path, statbuf);
+    return cfs_getNASattr(path, statbuf);
 
   struct dualFileHandle *dualFH;
   dualFH = (struct dualFileHandle *)fi->fh;
@@ -1055,7 +1078,7 @@ int cfs_fgetattr(const char *path, struct stat *statbuf,
   return retstat;
 }
 
-struct fuse_operations cfs_oper = {.getattr = cfs_getattr,
+struct fuse_operations cfs_oper = {.getattr = cfs_getNASattr,
                                   .readlink = cfs_readlink,
                                   // no .getdir -- that's deprecated
                                   .getdir = NULL,
@@ -1104,8 +1127,6 @@ void cfs_usage() {
 int main(int argc, char *argv[]) {
   int fuse_stat;
   struct cfs_state *cfs_data;
-
-  sqlite3 *db;
 
   // cfsfs doesn't do any access checking on its own (the comment
   // blocks in fuse.h mention some of the functions that need
@@ -1204,7 +1225,6 @@ int main(int argc, char *argv[]) {
     printf("Starting Metadata Initialization...\n");
   }
   char metadata_file[PATH_MAX]; 
-  char meta_filename[PATH_MAX] = "Metadata-File.db";
 
   printf("Hello!\n");
 
@@ -1216,8 +1236,8 @@ int main(int argc, char *argv[]) {
     printf("Metadata File Name: %s\n", metadata_file);
   }  
 
-  open_db(metadata_file, &db);
-  int ret = create_tables(db);
+  open_db(metadata_file, &metaDataBase);
+  int ret = create_tables(metaDataBase);
   if((VERBOSE)&&(ret ==-1)){
     printf("Tables probably exist already!\n");
   }
@@ -1226,38 +1246,32 @@ int main(int argc, char *argv[]) {
   {
     printf("Initializing LRU block...\n");
   }
-  
-  //init_lru_blk();
-  if (VERBOSE)
-  {
-    print_cache_used_size();
-  }
 
-  set_block_size(1024);
+  set_block_size(block_size);
 
   // function to init cache_used_size 
   if (VERBOSE)
   {
     printf("\n");
   }
-  init_cache_used_size(db);
+  init_cache_used_size(metaDataBase);
   if (VERBOSE)
   {
     print_cache_used_size();
   }
   // insert new file into metadata
-  create_file(db, "newdir/hello/Hello.txt", 1234);
-  create_file(db, "newdir/hello/Test2.txt", 1234);
+  create_file(metaDataBase, "newdir/hello/Hello.txt", 1234);
+  create_file(metaDataBase, "newdir/hello/Test2.txt", 1234);
   // function to create datablock entry
   if (VERBOSE)
   {
     printf("Calling insert block...\n");
   }
-  insert_block(db, "newdir/hello/Hello.txt", 1234);
-  insert_block(db, "newdir/hello/Hello.txt", 1578);
+  insert_block(metaDataBase, "newdir/hello/Hello.txt", 1234);
+  insert_block(metaDataBase, "newdir/hello/Hello.txt", 1578);
 
-  insert_block(db, "newdir/hello/Test2.txt", 1234);
-  insert_block(db, "newdir/hello/Test2.txt", 1578);
+  insert_block(metaDataBase, "newdir/hello/Test2.txt", 1234);
+  insert_block(metaDataBase, "newdir/hello/Test2.txt", 1578);
 
 
   // function to update remote file size- call on close() &|or open()
