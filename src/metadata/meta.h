@@ -28,20 +28,23 @@ LRU_block* init_lru_blk();
 
 // callback function used to execute sql statements
 static int callback(void *NotUsed, int argc, char **argv, char **azColName);
-// open database, populates the db pointer with the opened database
+// FUSE: open database, populates the db pointer with the opened database
 int open_db(char * db_name, sqlite3 ** db);
-// create the FILES and DATABLOCKS database tables
+// FUSE: create the FILES and DATABLOCKS database tables
 int create_tables(sqlite3 * db);
 
-// inserts a new file into the database
+// FUSE: inserts a new file into the database
 int create_file(sqlite3* db, char * filename, size_t remote_size);
-// remove deleted file
+// FUSE: remove deleted file
 int delete_file(sqlite3* db, char * filename);
 
 // inserts one block and several blocks into database
 int insert_block(sqlite3* db, char * filename, size_t blk_offset);
 int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
 
+
+// FUSE: write blocks from fuse side
+int write_blks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr);
 
 // delete evicted block/blocks from file
 /*
@@ -56,6 +59,8 @@ int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset);
 // call on every write to block
 int update_blk_time(sqlite3* db, char * filename, size_t blk_offset);
 
+
+// FUSE: check for cache hits
 int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */);
 int is_blk_in_cache(sqlite3* db, char * filename, size_t blk_offset);
 
