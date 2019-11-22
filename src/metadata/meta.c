@@ -57,6 +57,8 @@ int main(void) {
   // function to update block timestamp
 
   // check file in cache
+  printf("%d\n", is_file_in_cache(db, "newdir/hello/Hello.txt"));
+  printf("%d\n", is_file_in_cache(db, "newdir/hello/Test2.txt"));
 
   // check block in cache
 
@@ -508,16 +510,19 @@ int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
   sqlite3_bind_text(stmt, 1, filename, -1, SQLITE_STATIC);
   // Check if rows are returned on execution
   if(SQLITE_ROW != (ret = sqlite3_step(stmt))){
-    printf("Return value is not SLQITE_ROW\n");
     if(SQLITE_DONE == ret){
-      printf("No rows returned...\n");
+      // No rows returned => File not found
       return 0;
+    }
+    else {
+      printf("Check File: SQL Error: %s\n", sqlite3_errmsg(db));
+      return -1; // SQL Error
     }
   }
   // step to next row?
   ret = sqlite3_step(stmt);
   if (ret != SQLITE_DONE) {
-    printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
+    printf("Check File: SQL Error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
   // destructor of the sql stmt
@@ -525,13 +530,13 @@ int is_file_in_cache(sqlite3* db, char * filename /*,[datatype] mtime */){
   // check return code for status
    
   if (ret != SQLITE_OK){
-    fprintf(stderr, "Delete File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
+    fprintf(stderr, "Check File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
   /*-----------Check if file is in cache------------*/
 
   if (VERBOSE) {
-    fprintf(stdout, "File %s deleted.\n", filename);
+    fprintf(stdout, "File %s found.\n", filename);
   }
   // file found
   return 1;
