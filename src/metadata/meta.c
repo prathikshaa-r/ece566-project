@@ -65,8 +65,16 @@ int main(void) {
   printf("%d\n", is_blk_in_cache(db, "newdir/hello/Hello.txt", 1024));
   printf("%d\n", is_blk_in_cache(db, "newdir/hello/Test2.txt", 1234));
 
-
   // check blocks in cache
+  blk_arr = (size_t*)malloc(sizeof(*blk_arr)*4);
+  int *bool_arr = (int*)malloc(sizeof(*bool_arr)*4);
+  memcpy(blk_arr, (size_t[4]) {1024, 1948, 0000, 2134}, sizeof(blk_arr[0])*4);
+  are_blocks_in_cache(db, "newdir/hello/Hello.txt", 4, blk_arr, bool_arr);
+  for (int i = 0; i < 4; ++i)
+  {
+    printf("%lu:%d\n", blk_arr[i], bool_arr[i]);
+  }
+  free(blk_arr);
 
   // close database
   sqlite3_close(db);
@@ -600,7 +608,19 @@ int is_blk_in_cache(sqlite3* db, char * filename, size_t blk_offset){
   return 1;
 }
 
-
+int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks, 
+  size_t *blk_arr, int *bool_arr){
+  if (VERBOSE) printf("Num of blocks to check: %lu\n", num_blks);
+  for (size_t i = 0; i < num_blks; ++i)
+  {
+    if (VERBOSE)
+    {
+      printf("Checking block %s:%lu\n", filename, blk_arr[i]);
+    }
+    bool_arr[i] = is_blk_in_cache(db, filename, blk_arr[i]);
+  }
+  return 0;
+}
 
 int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
   return 0;
