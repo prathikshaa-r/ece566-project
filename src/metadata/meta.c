@@ -609,6 +609,7 @@ int is_blk_in_cache(sqlite3* db, char * filename, size_t blk_offset){
 
 int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks, 
   size_t *blk_arr, int *bool_arr){
+  int total_hit = 1;
   if (VERBOSE) printf("Num of blocks to check: %lu\n", num_blks);
   for (size_t i = 0; i < num_blks; ++i)
   {
@@ -617,8 +618,9 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
       printf("Checking block %s:%lu\n", filename, blk_arr[i]);
     }
     bool_arr[i] = is_blk_in_cache(db, filename, blk_arr[i]);
+    if(bool_arr[i] == 0) total_hit = 0;
   }
-  return 0;
+  return total_hit;
 }
 
 
@@ -627,6 +629,7 @@ int write_blks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
   // are_blks_in_cache()
   // YES->update_blks()
   // NO ->create_blks()
+  return 0;
 }
 
 int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
