@@ -1,6 +1,7 @@
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "meta.h"
 
@@ -41,6 +42,7 @@ int main(void) {
   insert_block(db, "newdir/hello/Test2.txt", 1234);
   insert_block(db, "newdir/hello/Test2.txt", 1578);
 
+  // insert blocks
   size_t *blk_arr = (size_t*)malloc(sizeof(*blk_arr)*4);
   memcpy(blk_arr, (size_t[4]) {1024, 1948, 0000, 2134}, sizeof(blk_arr[0])*4);
   insert_blocks(db, "newdir/hello/Hello.txt", 4, blk_arr);
@@ -54,7 +56,14 @@ int main(void) {
 
   // function to update remote file size- call on close() &|or open()
 
+  printf("Finished insertions and deletions. You should now check the db before I call write_blks\n");
+  sleep(5);
+  // write blocks - insert or update
   // function to update block timestamp
+  blk_arr = (size_t*)malloc(sizeof(*blk_arr)*4);
+  memcpy(blk_arr, (size_t[4]) {1024, 1948, 0000, 2134}, sizeof(blk_arr[0])*4);
+  write_blks(db, "newdir/hello/Hello.txt", 4, blk_arr);
+  free(blk_arr);  
 
   // check file in cache
   printf("%d\n", is_file_in_cache(db, "newdir/hello/Hello.txt"));
@@ -619,15 +628,20 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
 // NO ->create_blks()
 // USE UPSERT INSTEAD
 int write_blks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
+  printf("In write_blks\n");
   int *bool_arr = (int*)malloc(sizeof(*bool_arr)*num_blks);
+  memset(bool_arr, 0, sizeof(*bool_arr)*num_blks);
   are_blocks_in_cache(db, filename, num_blks, blk_arr, bool_arr);
   for (int i = 0; i < num_blks; ++i){
     if(bool_arr[i]){
+      printf("Write block: Update Block\n");
       update_blk_time(db, filename, blk_arr[i]);
     }else{
+      printf("Write block: Insert Block\n");
       insert_block(db, filename, blk_arr[i]);
     }
   }
+  free(bool_arr);
   return 0;
 }
 
@@ -641,7 +655,7 @@ int update_blk_time(sqlite3* db, char * filename, size_t blk_offset){
 
   /*-----------Update Block in Datablocks------------*/
   sql = "UPDATE Datablocks SET timestamp=(DATETIME('now')) "
-        "WHERE blk_start_offset=?1"
+        "WHERE blk_start_offset=?1 AND "
         "file_id=(SELECT file_id from files WHERE relative_path=?2);";
   /* 
   Prepare
