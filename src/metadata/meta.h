@@ -14,13 +14,13 @@ struct LRU_block{
   int blk_offset;
 } typedef LRU_block;
 
-static size_t meta_block_size = 0;
-static size_t cache_used_size = 0;
+static size_t meta_block_size = 0; // num of bytes
+static size_t cache_used_size = 0; // num of bytes
 
 void set_block_size(size_t blk_size);
 void init_cache_used_size(sqlite3 *db);
 void print_cache_used_size();
-size_t get_cache_used_size();
+size_t get_cache_used_size(); // tracked in num of bytes
 
 size_t str_to_num(const char *str);
 
