@@ -70,8 +70,7 @@ int main(void) {
   int *bool_arr = (int*)malloc(sizeof(*bool_arr)*4);
   memcpy(blk_arr, (size_t[4]) {1024, 1948, 0000, 2134}, sizeof(blk_arr[0])*4);
   are_blocks_in_cache(db, "newdir/hello/Hello.txt", 4, blk_arr, bool_arr);
-  for (int i = 0; i < 4; ++i)
-  {
+  for (int i = 0; i < 4; ++i){
     printf("%lu:%d\n", blk_arr[i], bool_arr[i]);
   }
   free(blk_arr);
@@ -352,13 +351,11 @@ int insert_block(sqlite3* db, char * filename, size_t blk_offset){
 
 
 int insert_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
-  if (VERBOSE)
-  {
+  if (VERBOSE){
     printf("Num of blocks to insert: %lu\n", num_blks);
   }
 
-  for (size_t i = 0; i < num_blks; ++i)
-  {
+  for (size_t i = 0; i < num_blks; ++i){
     insert_block(db, filename, blk_arr[i]);
   }
   return 0;
@@ -385,8 +382,7 @@ int delete_file(sqlite3* db, char * filename){
   // STEP
   int ret = sqlite3_step(stmt); 
   cache_used_size -= sqlite3_column_int64(stmt, 0);
-  if (VERBOSE)
-  {
+  if (VERBOSE){
     print_cache_used_size();
   }
   ret = sqlite3_step(stmt);
@@ -476,8 +472,7 @@ int delete_block(sqlite3* db, char * filename, size_t blk_offset){
   /*---------Reduce local_size in Files----------*/
   // If block deletion successful, reduce used space count
   cache_used_size -= meta_block_size;
-  if (VERBOSE)
-  {
+  if (VERBOSE){
     print_cache_used_size();
   }
   if (VERBOSE) {
@@ -487,14 +482,11 @@ int delete_block(sqlite3* db, char * filename, size_t blk_offset){
 }
 
 int delete_blocks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
-  if (VERBOSE)
-  {
+  if (VERBOSE){
     printf("Num of blocks to delete: %lu\n", num_blks);
   }
-  for (size_t i = 0; i < num_blks; ++i)
-  {
-    if (VERBOSE)
-    {
+  for (size_t i = 0; i < num_blks; ++i){
+    if (VERBOSE){
       printf("Deleting block %s:%lu\n", filename, blk_arr[i]);
     }
     delete_block(db, filename, blk_arr[i]);
@@ -611,10 +603,8 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
   size_t *blk_arr, int *bool_arr){
   int total_hit = 1;
   if (VERBOSE) printf("Num of blocks to check: %lu\n", num_blks);
-  for (size_t i = 0; i < num_blks; ++i)
-  {
-    if (VERBOSE)
-    {
+  for (size_t i = 0; i < num_blks; ++i){
+    if (VERBOSE){
       printf("Checking block %s:%lu\n", filename, blk_arr[i]);
     }
     bool_arr[i] = is_blk_in_cache(db, filename, blk_arr[i]);
@@ -624,11 +614,20 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
 }
 
 
+// are_blks_in_cache()
+// YES->update_blks()
+// NO ->create_blks()
+// USE UPSERT INSTEAD
 int write_blks(sqlite3* db, char * filename, size_t num_blks, size_t *blk_arr){
   int *bool_arr = (int*)malloc(sizeof(*bool_arr)*num_blks);
-  // are_blks_in_cache()
-  // YES->update_blks()
-  // NO ->create_blks()
+  are_blocks_in_cache(db, filename, num_blks, blk_arr, bool_arr);
+  for (int i = 0; i < num_blks; ++i){
+    if(bool_arr[i]){
+      update_blk_time(db, filename, blk_arr[i]);
+    }else{
+      insert_block(db, filename, blk_arr[i]);
+    }
+  }
   return 0;
 }
 
@@ -637,6 +636,43 @@ int update_lru_blk(sqlite3* db, char * filename, size_t blk_offset){
 }
 
 int update_blk_time(sqlite3* db, char * filename, size_t blk_offset){
+  char *sql;
+  sqlite3_stmt *stmt;
+
+  /*-----------Update Block in Datablocks------------*/
+  sql = "UPDATE Datablocks SET timestamp=(DATETIME('now')) "
+        "WHERE blk_start_offset=?1"
+        "file_id=(SELECT file_id from files WHERE relative_path=?2);";
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); 
+  // Bind
+  sqlite3_bind_int64(stmt, 1, blk_offset);
+  sqlite3_bind_text(stmt, 2, filename, -1, SQLITE_STATIC);
+  // STEP
+  int ret = sqlite3_step(stmt); 
+  if (ret != SQLITE_DONE) {
+    printf("Update Block: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Update Block: Finalize: SQL error: %s\n", 
+      sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Update block in Datablocks------------*/
+
+  if (VERBOSE) {
+    fprintf(stdout, "Block updated\n");
+  }
+
   return 0;
 }
 
