@@ -11,160 +11,329 @@ cfs_init()
     max_background =  0
     congestion_threshold =  0
     context:
-    fuse = 55603490
+    fuse = f13f5fb0
     uid =  0
     gid =  0
     pid =  0
-    private_data = 555e0260
-    logfile = 555e2320
+    private_data = f13d7260
+    logfile = f13d9320
     nasdir = /home/wjb24/ECE566/ece566-project/example/nasdir
     umask = 00000
 
-cfs_getattr(path="/", statbuf=0x88ee2c00)
+cfs_getNASattr(path="/", statbuf=0xb4e1bc00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
+    st_dev =  64770
+    st_ino =  8410383
+    st_mode = 0 40775
     st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
+    st_uid =  1100998
+    st_gid =  1002
     st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
+    st_size =  23
+    st_blksize =  4096
+    st_blocks =  0
+    st_atime = 0x 5dd89e91
+    st_mtime = 0x 5dd89ddf
+    st_ctime = 0x 5dd89ddf
 
 cfs_access(path="/", mask=01)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
 
-cfs_getattr(path="/", statbuf=0x88ee2c00)
+cfs_opendir(path="/", fi=0xb4e1bc20)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
+    opendir returned 0x0x7f5eb0002010
+    fi:
+    flags = 0x 00018800
+    fh_old = 0x 00000000
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0002010
+    lock_owner = 0x 0000000000000000
+
+cfs_getNASattr(path="/", statbuf=0xafffec00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
+    st_dev =  64770
+    st_ino =  8410383
+    st_mode = 0 40775
     st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
+    st_uid =  1100998
+    st_gid =  1002
     st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
+    st_size =  23
+    st_blksize =  4096
+    st_blocks =  0
+    st_atime = 0x 5dd89e91
+    st_mtime = 0x 5dd89ddf
+    st_ctime = 0x 5dd89ddf
 
-cfs_getattr(path="/", statbuf=0x896e3c00)
+cfs_readdir(path="/", buf=0xb0001f90, filler=0xb5cdfd00, offset=0, fi=0xb4e1bc20)
+    readdir returned 0x0x7f5eb0002040
+calling filler with name .
+calling filler with name ..
+calling filler with name timeStamp
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f5eb0002010
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0002010
+    lock_owner = 0x 0000000000000000
+
+cfs_releasedir(path="/", fi=0xb4e1bc30)
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f5eb0002010
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0002010
+    lock_owner = 0x 0000000000000000
+
+cfs_getNASattr(path="/timeStamp", statbuf=0xafffec30)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/timeStamp", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/timeStamp"
+    lstat returned 0
+    si:
+    st_dev =  64770
+    st_ino =  8412853
+    st_mode = 0 100644
+    st_nlink =  1
+    st_uid =  1100998
+    st_gid =  1002
+    st_rdev =  0
+    st_size =  9
+    st_blksize =  4096
+    st_blocks =  8
+    st_atime = 0x 5dd89dec
+    st_mtime = 0x 5dd89dec
+    st_ctime = 0x 5dd89dec
+
+cfs_opendir(path="/", fi=0xb4e1bc20)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
+    opendir returned 0x0x7f5eb000a580
+    fi:
+    flags = 0x 00018800
+    fh_old = 0x 00000000
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb000a580
+    lock_owner = 0x 0000000000000000
+
+cfs_getNASattr(path="/", statbuf=0xaf7fdc00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
+    st_dev =  64770
+    st_ino =  8410383
+    st_mode = 0 40775
     st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
+    st_uid =  1100998
+    st_gid =  1002
     st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
+    st_size =  23
+    st_blksize =  4096
+    st_blocks =  0
+    st_atime = 0x 5dd89e91
+    st_mtime = 0x 5dd89ddf
+    st_ctime = 0x 5dd89ddf
 
-cfs_getattr(path="/", statbuf=0x88ee2c00)
+cfs_readdir(path="/", buf=0xb00020a0, filler=0xb5cdfd00, offset=0, fi=0xafffec20)
+    readdir returned 0x0x7f5eb000a5b0
+calling filler with name .
+calling filler with name ..
+calling filler with name timeStamp
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f5eb000a580
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb000a580
+    lock_owner = 0x 0000000000000000
+
+cfs_releasedir(path="/", fi=0xaf7fdc30)
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f5eb000a580
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb000a580
+    lock_owner = 0x 0000000000000000
+
+cfs_getNASattr(path="/", statbuf=0xafffec00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
+    st_dev =  64770
+    st_ino =  8410383
+    st_mode = 0 40775
     st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
+    st_uid =  1100998
+    st_gid =  1002
     st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
+    st_size =  23
+    st_blksize =  4096
+    st_blocks =  0
+    st_atime = 0x 5dd89e91
+    st_mtime = 0x 5dd89ddf
+    st_ctime = 0x 5dd89ddf
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/timeStamp", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/timeStamp"
+    cfs_pathToFileName: path = "/timeStamp", fileName = "/timeStamp"
+    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/timeStamp", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/timeStamp"
 
-cfs_getattr(path="/", statbuf=0x896e3c00)
+cfs_open(path="/timeStamp", fi=0xb4e1bce0)
+, flags= 32768
+cfs_open(flag bitwise: 0)
+    NAS open returned 6
+
+cfs_getNASattr(path="/timeStamp", statbuf=0xb4e18970)
+    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/timeStamp", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/timeStamp"
+    lstat returned 0
+    si:
+    st_dev =  64770
+    st_ino =  8412853
+    st_mode = 0 100644
+    st_nlink =  1
+    st_uid =  1100998
+    st_gid =  1002
+    st_rdev =  0
+    st_size =  9
+    st_blksize =  4096
+    st_blocks =  8
+    st_atime = 0x 5dd89dec
+    st_mtime = 0x 5dd89dec
+    st_ctime = 0x 5dd89dec
+    cfs_pathToFileName: path = "/timeStamp", fileName = "/timeStamp"
+    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/timeStamp", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/timeStamp"
+
+cfs_getCacheattr(path="/timeStamp", statbuf=0xb4e18a00)
+    lstat returned 0
+    si:
+    st_dev =  1792
+    st_ino =  13
+    st_mode = 0 100644
+    st_nlink =  1
+    st_uid =  1100998
+    st_gid =  1002
+    st_rdev =  0
+    st_size =  1024
+    st_blksize =  1024
+    st_blocks =  2
+    st_atime = 0x 5dd89dec
+    st_mtime = 0x 5dd89dec
+    st_ctime = 0x 5dd89dec
+
+NAS mtime: 22.11.2019 21:48:12 | Cache mtime: 22.11.2019 21:48:12
+    Cache open returned 7
+    fi:
+    flags = 0x 00008000
+    fh_old = 0x 00000000
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0003190
+    lock_owner = 0x 0000000000000000
+
+cfs_read original(path="/timeStamp", buf=0xb0004a40, size=4096, offset=0, fi=0xb4e1bce0, nasFH = 0x 0000000000000006, cacheFH = 0x 0000000000000007)
+
+cfs_read aligned(path="/timeStamp", buf=0xb0005a50, size=4096, offset=0, fi=0xb4e1bce0, nasFH = 0x 0000000000000006, cacheFH = 0x 0000000000000007)
+    fi:
+    flags = 0x 00008000
+    fh_old = 0x 7f5eb0003190
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0003190
+    lock_owner = 0x 0000000000000000
+    Data miss:nas pread plus fill cache returned 9
+    cfs_pathToFileName: path = "/timeStamp", fileName = "/timeStamp"
+    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/timeStamp", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/timeStamp"
+
+cfs_cacheWrite(path="/home/wjb24/ECE566/ece566-project/example/cachedir/timeStamp", buf=0xb0005a50, size=4096, offset=0, fi=0xb4e1bce0, cacheFileHandle = 0x 0000000000000007)
+    fi:
+    flags = 0x 00008000
+    fh_old = 0x 7f5eb0003190
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0003190
+    lock_owner = 0x 0000000000000000
+    pwrite returned 4096
+
+cfs_fgetattr(path="/timeStamp", statbuf=0xb4e1bc00, fi=0xb4e1bce0)
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f5eb0003190
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0003190
+    lock_owner = 0x 0000000000000000
+    si:
+    st_dev =  64770
+    st_ino =  8412853
+    st_mode = 0 100644
+    st_nlink =  1
+    st_uid =  1100998
+    st_gid =  1002
+    st_rdev =  0
+    st_size =  9
+    st_blksize =  4096
+    st_blocks =  8
+    st_atime = 0x 5dd89fad
+    st_mtime = 0x 5dd89dec
+    st_ctime = 0x 5dd89dec
+
+cfs_flush(path="/timeStamp", fi=0xb4e1bce0)
+    fi:
+    flags = 0x 00000000
+    fh_old = 0x 7f5eb0003190
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0003190
+    lock_owner = 0x 23303c8afc3e9a6c
+
+cfs_release(path="/timeStamp", fi=0xafffece0, nasFH=0x0000000000000006, cacheFH=0x0000000000000007)
+    fi:
+    flags = 0x 00008000
+    fh_old = 0x 7f5eb0003190
+    writepage =  0
+    direct_io =  0
+    keep_cache =  0
+    fh = 0x 00007f5eb0003190
+    lock_owner = 0x 0000000000000000
+    cfs_pathToFileName: path = "/timeStamp", fileName = "/timeStamp"
+    cfs_fullCachePath:  cachedir = "/home/wjb24/ECE566/ece566-project/example/cachedir", path = "/timeStamp", cachePath = "/home/wjb24/ECE566/ece566-project/example/cachedir/timeStamp"
+
+Fallocate call: fallocate -d /home/wjb24/ECE566/ece566-project/example/cachedir/timeStamp
+    Cache digging returned 0
+    Cache close returned 0
+    NAS close returned 0
+
+cfs_getNASattr(path="/", statbuf=0xb4e1bc00)
     cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
     lstat returned 0
     si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
+    st_dev =  64770
+    st_ino =  8410383
+    st_mode = 0 40775
     st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
+    st_uid =  1100998
+    st_gid =  1002
     st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
+    st_size =  23
+    st_blksize =  4096
+    st_blocks =  0
+    st_atime = 0x 5dd89e91
+    st_mtime = 0x 5dd89ddf
+    st_ctime = 0x 5dd89ddf
 
-cfs_getattr(path="/", statbuf=0x88ee2c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
-    st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
-    st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
-
-cfs_getattr(path="/", statbuf=0x896e3c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
-    st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
-    st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
-
-cfs_getattr(path="/", statbuf=0x88ee2c00)
-    cfs_fullNasPath:  nasdir = "/home/wjb24/ECE566/ece566-project/example/nasdir", path = "/", nasPath = "/home/wjb24/ECE566/ece566-project/example/nasdir/"
-    lstat returned 0
-    si:
-    st_dev =  48
-    st_ino =  262809
-    st_mode = 0 40777
-    st_nlink =  2
-    st_uid =  65534
-    st_gid =  65534
-    st_rdev =  0
-    st_size =  4096
-    st_blksize =  32768
-    st_blocks =  8
-    st_atime = 0x 5dd0cad0
-    st_mtime = 0x 5dd0cacb
-    st_ctime = 0x 5dd0cacb
-
-cfs_destroy(userdata=0x555e0260)
+cfs_destroy(userdata=0xf13d7260)
