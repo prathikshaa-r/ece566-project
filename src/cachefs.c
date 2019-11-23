@@ -500,6 +500,22 @@ int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_
 
   log_fi(fi); 
 
+  //------------Metadata Adjustments for Write--------------// 
+  size_t number_blocks = size/block_size;
+  size_t offsetArray[number_blocks];
+  for(int block_index = 0; block_index < number_blocks; block_index++)
+  {
+    offsetArray[block_index] = offset+(block_index*block_size);
+  }
+
+  if(get_cache_used_size() > cache_size*1024)
+  {
+    
+  }
+
+  write_blks(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray);
+  //------------End of Metadata Adjustments for Write--------------// 
+
   return log_syscall("pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
 }
 
@@ -633,27 +649,22 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   //---------------Cache Aspect of Writes---------------//
   struct stat nasAttr;
   cfs_getNASattr(path, &nasAttr);
-
-  //Check if file is present in cache, and if so write to it using cacheWrite
-  bool presentInCache = true;
-  //presentInCache = is_file_in_cache(cacheMeta, cacheFileName);// ---- Uncomment when implemented
-  if(presentInCache)//write to cachefor future reads
+  size_t nasReadSize = alignedSize;
+  if(nasReadSize+lowerOffset > nasAttr.st_size)
   {
-    char* cacheBuf = malloc(alignedSize*sizeof(char));
-    size_t nasReadSize = alignedSize;
-    if(nasReadSize+lowerOffset > nasAttr.st_size)
-    {
-      nasReadSize = nasAttr.st_size-lowerOffset;     
-    }
-    log_msg(
-        "\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
-        cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
-    log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
-    char cacheFileName[PATH_MAX];
-    cfs_pathToFileName(cacheFileName, path);
-    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
-    free((void*)cacheBuf);
+    nasReadSize = nasAttr.st_size-lowerOffset;     
   }
+
+  char* cacheBuf = malloc(alignedSize*sizeof(char));
+
+  log_msg("\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
+  cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
+  log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+
+  char cacheFileName[PATH_MAX];
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads 
+  free((void*)cacheBuf);
   return retstat;
 }
 
