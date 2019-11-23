@@ -423,7 +423,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 
 
   bool presentInCache = false;
-  presentInCache = is_file_in_cache(metaDataBase, cacheFileName);// --Uncomment
+  presentInCache = is_file_in_cache(metaDataBase, cacheFileName);
 
   if(nasFileDescriptor < 0)//file was not present on remote server,if in local, delete 
   {
@@ -486,7 +486,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 //Specifically write to cache
 //Need for reads so that future reads can be from cache
 //Also called by cfs_write when the file is in cache, has same function
-int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+int cfs_cacheWrite(char *cacheFileName, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
   int retstat;
   char cachePath[PATH_MAX];
@@ -508,15 +508,18 @@ int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_
     offsetArray[block_index] = offset+(block_index*block_size);
   }
 
-  if(get_cache_used_size() > cache_size*1024)
+  while(get_cache_used_size() >= cache_size*1024)//create space in cache through LRU evictions
   {
-    
+    log_msg("\nCache is full, evicting blocks...\n");
+    char* evictionFileNames[number_blocks];
+    size_t evictedOffsets[number_blocks];
+    //evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets); Uncomment when implemented 
   }
 
   write_blks(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray);
   //------------End of Metadata Adjustments for Write--------------// 
 
-  return log_syscall("pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
+  return log_syscall("Cache pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
 }
 
 /** Read data from an open file
@@ -563,7 +566,7 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
   char cacheFileName[PATH_MAX];
   cfs_pathToFileName(cacheFileName, path);
   bool cacheDataHit = false;
-  int dataCheck = are_blocks_in_cache(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray, (int *)&cacheBlockHitYN); //Uncomment when implemented
+  int dataCheck = are_blocks_in_cache(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray, (int *)&cacheBlockHitYN); 
   if(dataCheck < 0)
   {
     log_error("Error in are_blocks_in_cache");
