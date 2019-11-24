@@ -56,7 +56,8 @@ int main(void) {
 
   // function to update remote file size- call on close() &|or open()
 
-  printf("Finished insertions and deletions. You should now check the db before I call write_blks\n");
+  printf("Finished insertions and deletions. "
+         "You should now check the db before I call write_blks...\n");
   sleep(5);
   // write blocks - insert or update
   // function to update block timestamp
@@ -83,6 +84,23 @@ int main(void) {
     printf("%lu:%d\n", blk_arr[i], bool_arr[i]);
   }
   free(blk_arr);
+
+  // evict a certain nunber of blocks
+  int MAX_PATH=512;
+  char **filenames;
+  size_t *blocks;
+  size_t num_blks = 4;
+
+  filenames = (char **)malloc(sizeof(char *)*num_blks);
+  memset(filenames, 0, sizeof(char*)*num_blks);
+  for (int i = 0; i < num_blks; ++i){
+    filenames[i] = (char *)malloc(sizeof(*filenames)*MAX_PATH);
+    memset(filenames[i], 0, sizeof(*filenames)*MAX_PATH);
+  }
+  blocks = (size_t *)malloc(sizeof(*blocks)*num_blks);
+  memset(blocks, 0, sizeof(*blocks)*num_blks);
+
+  evict_blocks(db, num_blks, filenames, blocks);
 
   // close database
   sqlite3_close(db);
@@ -690,6 +708,69 @@ int update_blk_time(sqlite3* db, char * filename, size_t blk_offset){
   return 0;
 }
 
+// Get blocks with oldest timestamps
+// Get filename for each block
+// Delete blocks
+ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames, 
+  size_t *blk_offsets){
+  char *sql;
+  sqlite3_stmt *stmt;
+  int file_ids[num_blks];
+
+  /*-----------Get oldest num_blks blocks------------*/
+  sql="SELECT blk_start_offset, file_id FROM Datablocks "
+      "ORDER BY timestamp ASC LIMIT ?1;";
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); 
+  // Bind
+  sqlite3_bind_int64(stmt, 1, num_blks);
+  // STEP
+  int ret = 0; //sqlite3_step(stmt); 
+  int i = 0; // row number
+  if(VERBOSE) printf("Evicting blocks:\n");
+  while(SQLITE_ROW == (ret = sqlite3_step(stmt))) {
+    int col;
+    for(col=0; col<sqlite3_column_count(stmt); col++) {
+      if(col == 0) blk_offsets[i] = sqlite3_column_int64(stmt, col);
+      if(col == 1) file_ids[i] = sqlite3_column_int(stmt, col);
+      // const char * columnName = sqlite3_column_name(stmt, col);
+      // if (strcmp("blk_start_offset", columnName)){
+
+      // }
+      // else if (strcmp("file_id", columnName)){
+      //   strncpy(filenames[i], sqlite3_column_text(stmt, col), MAX_PATH);
+      // }
+      // Note that by using sqlite3_column_text, sqlite will coerce the value into a string
+      // printf("\tColumn %s(%i): '%s'\n",
+      //   sqlite3_column_name(stmt, col), col,
+      //   sqlite3_column_text(stmt, col));
+    }
+    printf("\tBlock Offset: %lu\tFile ID: %d\n", blk_offsets[i], file_ids[i]);
+    i++; // track row number
+  }
+
+  if (ret != SQLITE_DONE) {
+    printf("Evict Block: Get oldest blocks: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Evict Block: Get oldest blocks: Finalize: SQL error: %s\n", 
+      sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Get oldest num_blks blocks------------*/
+  return 0; // should return number of successfully evicted blocks
+}
+
+
 // for(int col=0; col<sqlite3_column_count(stmt); col++) {
 //     // Note that by using sqlite3_column_text, sqlite will coerce the value into a string
 //     printf("\tColumn %s(%i): '%s'\n",
@@ -697,13 +778,13 @@ int update_blk_time(sqlite3* db, char * filename, size_t blk_offset){
 //       sqlite3_column_text(stmt, col));
 //   }
 
-// while(SQLITE_ROW == (rc = sqlite3_step(select_stmt))) {
+// while(SQLITE_ROW == (rc = sqlite3_step(stmt))) {
 //     int col;
 //     printf("Found row\n");
-//     for(col=0; col<sqlite3_column_count(select_stmt); col++) {
+//     for(col=0; col<sqlite3_column_count(stmt); col++) {
 //       // Note that by using sqlite3_column_text, sqlite will coerce the value into a string
 //       printf("\tColumn %s(%i): '%s'\n",
-//         sqlite3_column_name(select_stmt, col), col,
-//         sqlite3_column_text(select_stmt, col));
+//         sqlite3_column_name(stmt, col), col,
+//         sqlite3_column_text(stmt, col));
 //     }
 //   }

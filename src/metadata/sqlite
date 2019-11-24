@@ -36,3 +36,8 @@ DELETE FROM Datablocks WHERE
 UPDATE Datablocks SET timestamp=(DATETIME('now')) 
  WHERE file_id=(SELECT file_id from files WHERE relative_path=%s);
 
+--SELECT blk_start_offset, file_id
+--SELECT filename WHERE file_id=?1--
+SELECT blk_start_offset, file_id FROM Datablocks
+ ORDER BY timestamp ASC LIMIT 2;
+
