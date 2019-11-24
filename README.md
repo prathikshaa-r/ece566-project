@@ -1,4 +1,6 @@
-# CacheFS (Peristent Stackable Cache for commodity NAS[^1])
+# CacheFS
+(Peristent Stackable Cache for commodity NAS[^1])
+------
 Based on BBFS using FUSE (Filesystem in USErspace)
 
 ## Install Dependencies:
