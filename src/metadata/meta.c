@@ -5,7 +5,7 @@
 
 #include "meta.h"
 
-/*
+
 int main(void) {
   // printf("%s\n", sqlite3_libversion());
 
@@ -86,7 +86,7 @@ int main(void) {
   free(blk_arr);
   free(bool_arr);
 
-  evict a certain nunber of blocks
+  // evict a certain nunber of blocks
   char **filenames;
   size_t *blocks;
   int *file_ids;
@@ -130,7 +130,6 @@ int main(void) {
 
   return EXIT_SUCCESS;
 }
-*/
 
 // LRU_block* init_lru_blk(){
 //   LRU_block *lru_block = malloc(sizeof(LRU_block));
@@ -771,12 +770,12 @@ ssize_t evict_blocks(sqlite3 *db, size_t num_blks, int *file_ids, char **filenam
       if(col == 1) file_ids[row] = sqlite3_column_int(stmt, col);
     }
     if(filenames[file_ids[row]]){
-      printf("Filename queried: %s\n", filenames[file_ids[row]]);
+      if(VERBOSE) printf("Filename queried: %s\n", filenames[file_ids[row]]);
     }
     else{
       get_filename_from_fileid(db, file_ids[row], (char **)&filenames[row]);
     }
-    printf("\tBlock Offset: %lu\tFile ID: %d\n", blk_offsets[row], file_ids[row]);
+    if(VERBOSE) printf("\tBlock Offset: %lu\tFile ID: %d\n", blk_offsets[row], file_ids[row]);
     row++; // track row number
   }
 
@@ -792,7 +791,17 @@ ssize_t evict_blocks(sqlite3 *db, size_t num_blks, int *file_ids, char **filenam
     return -1;
   }
   /*-----------Get oldest num_blks blocks------------*/
-  return 0; // should return number of successfully evicted blocks
+
+  /*--------Delete the blocks from Datablocks--------*/
+  printf("Before delete blocks...\n");
+  for (int i = 0; i < row; ++i){ // for each entry in old block
+    if(VERBOSE) printf("Deleting: %s:%lu\n", filenames[file_ids[i]], blk_offsets[i]);
+    delete_block(db, filenames[file_ids[i]], blk_offsets[i]);
+  }
+  printf("After delete blocks...\n");
+  /*--------Delete the blocks from Datablocks--------*/
+
+  return row; // should return number of successfully evicted blocks
 }
 
 int get_filename_from_fileid(sqlite3 *db, int file_id, char **filename){
