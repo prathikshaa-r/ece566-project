@@ -9,10 +9,10 @@
 #define VERBOSE 1
 #define UNUSED(x) (void)(x)
 
-struct LRU_block{
-  char * filename;
-  int blk_offset;
-} typedef LRU_block;
+// struct LRU_block{
+//   char * filename;
+//   int blk_offset;
+// } typedef LRU_block;
 
 static size_t meta_block_size = 0; // num of bytes
 static size_t cache_used_size = 0; // num of bytes
@@ -24,7 +24,7 @@ size_t get_cache_used_size(); // tracked in num of bytes
 
 size_t str_to_num(const char *str);
 
-LRU_block* init_lru_blk();
+// LRU_block* init_lru_blk();
 
 // callback function used to execute sql statements
 static int callback(void *NotUsed, int argc, char **argv, char **azColName);
@@ -73,8 +73,11 @@ int are_blocks_in_cache(sqlite3* db, char * filename, size_t num_blks,
 inputs:
 * db: database handle
 * num_blks: num of blocks to evict
+* file_ids: file_id corresponding to each file.
+* 			use this as index to lookup filename from char filenames[][]
 * filenames: filenames array corresponding to each evicted block
-*	-MUST BE MALLOCED BY USER
+*	-POINTER ARRAY MUST BE MALLOCED BY USER
+*	-POINTER ARRAY + ALL NON_NULL POINTERS IN ARRAY MUST BE FREED
 * blk_offsets: array of each blk evicted from the corresponding file in filenames
 *	-MUST BE MALLOCED BY USER
 

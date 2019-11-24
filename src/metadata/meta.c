@@ -20,8 +20,8 @@ int main(void) {
     fprintf(stdout, "Tables probably exist already!\n");
   }
   
-  printf("Initializing LRU block...\n");
-  init_lru_blk();
+  // printf("Initializing LRU block...\n");
+  // init_lru_blk();
 
   set_block_size(1024);
 
@@ -84,8 +84,9 @@ int main(void) {
     printf("%lu:%d\n", blk_arr[i], bool_arr[i]);
   }
   free(blk_arr);
+  free(bool_arr);
 
-  // evict a certain nunber of blocks
+  evict a certain nunber of blocks
   char **filenames;
   size_t *blocks;
   int *file_ids;
@@ -130,12 +131,12 @@ int main(void) {
   return EXIT_SUCCESS;
 }
 
-LRU_block* init_lru_blk(){
-  LRU_block *lru_block = malloc(sizeof(LRU_block));
-  lru_block->filename = NULL;
-  lru_block->blk_offset = 0;
-  return lru_block;
-}
+// LRU_block* init_lru_blk(){
+//   LRU_block *lru_block = malloc(sizeof(LRU_block));
+//   lru_block->filename = NULL;
+//   lru_block->blk_offset = 0;
+//   return lru_block;
+// }
 
 void print_cache_used_size(){
   printf("Cache Usage: %lu\n", cache_used_size);
@@ -437,6 +438,13 @@ int delete_file(sqlite3* db, char * filename){
   ret = sqlite3_step(stmt);
   if (ret != SQLITE_DONE) {
     printf("Delete File: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+   
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Delete File: Finalize: SQL error: %s\n", sqlite3_errmsg(db));
     return -1;
   }
 
