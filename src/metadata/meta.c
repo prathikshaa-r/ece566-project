@@ -86,21 +86,43 @@ int main(void) {
   free(blk_arr);
 
   // evict a certain nunber of blocks
-  int MAX_PATH=512;
   char **filenames;
   size_t *blocks;
+  int *file_ids;
   size_t num_blks = 4;
 
-  filenames = (char **)malloc(sizeof(char *)*num_blks);
-  memset(filenames, 0, sizeof(char*)*num_blks);
+  filenames = (char **)malloc(sizeof(*filenames)*num_blks);
+  memset(filenames, 0, sizeof(*filenames)*num_blks);
+
+  printf("Before block eviction\n");
   for (int i = 0; i < num_blks; ++i){
-    filenames[i] = (char *)malloc(sizeof(*filenames)*MAX_PATH);
-    memset(filenames[i], 0, sizeof(*filenames)*MAX_PATH);
+    if(filenames[i]){
+      printf("Filename[%d]: %s\n", i, filenames[i]);
+    }
   }
+
   blocks = (size_t *)malloc(sizeof(*blocks)*num_blks);
   memset(blocks, 0, sizeof(*blocks)*num_blks);
 
-  evict_blocks(db, num_blks, filenames, blocks);
+  file_ids = (int*)malloc(sizeof(*file_ids)*num_blks);
+  memset(file_ids, 0, sizeof(*file_ids)*num_blks);
+
+  evict_blocks(db, num_blks, file_ids, filenames, blocks);
+  printf("Evicted Blocks...\n");
+
+  for (int i = 0; i < num_blks; ++i){
+    if(filenames[i]){
+      printf("Filename[%d]: %s\n", i, filenames[i]);
+      free(filenames[i]);
+    }
+  }
+  printf("Freed each filename.\n");
+  free(filenames);
+  printf("Freed filenames.\n");
+  free(blocks);  
+  printf("Freed blocks.\n");
+  free(file_ids);
+  printf("Freed file_ids.\n");
 
   // close database
   sqlite3_close(db);
@@ -711,11 +733,10 @@ int update_blk_time(sqlite3* db, char * filename, size_t blk_offset){
 // Get blocks with oldest timestamps
 // Get filename for each block
 // Delete blocks
-ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames, 
+ssize_t evict_blocks(sqlite3 *db, size_t num_blks, int *file_ids, char **filenames, 
   size_t *blk_offsets){
   char *sql;
   sqlite3_stmt *stmt;
-  int file_ids[num_blks];
 
   /*-----------Get oldest num_blks blocks------------*/
   sql="SELECT blk_start_offset, file_id FROM Datablocks "
@@ -732,27 +753,22 @@ ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames,
   sqlite3_bind_int64(stmt, 1, num_blks);
   // STEP
   int ret = 0; //sqlite3_step(stmt); 
-  int i = 0; // row number
+  int row = 0; // row number
   if(VERBOSE) printf("Evicting blocks:\n");
   while(SQLITE_ROW == (ret = sqlite3_step(stmt))) {
     int col;
-    for(col=0; col<sqlite3_column_count(stmt); col++) {
-      if(col == 0) blk_offsets[i] = sqlite3_column_int64(stmt, col);
-      if(col == 1) file_ids[i] = sqlite3_column_int(stmt, col);
-      // const char * columnName = sqlite3_column_name(stmt, col);
-      // if (strcmp("blk_start_offset", columnName)){
-
-      // }
-      // else if (strcmp("file_id", columnName)){
-      //   strncpy(filenames[i], sqlite3_column_text(stmt, col), MAX_PATH);
-      // }
-      // Note that by using sqlite3_column_text, sqlite will coerce the value into a string
-      // printf("\tColumn %s(%i): '%s'\n",
-      //   sqlite3_column_name(stmt, col), col,
-      //   sqlite3_column_text(stmt, col));
+    for(col=0; col < sqlite3_column_count(stmt); col++) {
+      if(col == 0) blk_offsets[row] = sqlite3_column_int64(stmt, col);
+      if(col == 1) file_ids[row] = sqlite3_column_int(stmt, col);
     }
-    printf("\tBlock Offset: %lu\tFile ID: %d\n", blk_offsets[i], file_ids[i]);
-    i++; // track row number
+    if(filenames[file_ids[row]]){
+      printf("Filename queried: %s\n", filenames[file_ids[row]]);
+    }
+    else{
+      get_filename_from_fileid(db, file_ids[row], (char **)&filenames[row]);
+    }
+    printf("\tBlock Offset: %lu\tFile ID: %d\n", blk_offsets[row], file_ids[row]);
+    row++; // track row number
   }
 
   if (ret != SQLITE_DONE) {
@@ -770,6 +786,48 @@ ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames,
   return 0; // should return number of successfully evicted blocks
 }
 
+int get_filename_from_fileid(sqlite3 *db, int file_id, char **filename){
+  char *sql;
+  sqlite3_stmt *stmt;
+
+  printf("Get filename for file_id:%d\n", file_id);
+  /*-----------Get filename using the file_id------------*/
+  sql = "SELECT relative_path FROM Files WHERE file_id=?1;";
+  /* 
+  Prepare
+  Bind
+  Step
+  Finalize
+  */
+  // Prepare stmt
+  sqlite3_prepare_v2(db, sql, -1, &stmt, NULL); 
+  // Bind
+  sqlite3_bind_int(stmt, 1, file_id);
+  // STEP
+  int ret = sqlite3_step(stmt); 
+  if(ret == SQLITE_ROW){
+    const char * filename_on_stack = (char *)sqlite3_column_text(stmt, 0);
+    printf("Filename[%d]:%s\n", file_id, sqlite3_column_text(stmt, 0));
+    *filename = (char *)malloc(sizeof(filename_on_stack));
+    strcpy(*filename, filename_on_stack);
+    printf("Filename variable after assigning sql column text: %s\n", *filename);
+  }
+  ret = sqlite3_step(stmt);
+
+  if (ret != SQLITE_DONE) {
+    printf("Evict Block: Get Filename: SQL Error: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }
+  ret = sqlite3_finalize(stmt);
+  // check return code for status
+  if (ret != SQLITE_OK){
+    fprintf(stderr, "Evict Block: Get Filename: Finalize: SQL error: %s\n", 
+      sqlite3_errmsg(db));
+    return -1;
+  }
+  /*-----------Get filename using the file_id------------*/
+  return 0;
+}
 
 // for(int col=0; col<sqlite3_column_count(stmt); col++) {
 //     // Note that by using sqlite3_column_text, sqlite will coerce the value into a string

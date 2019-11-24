@@ -85,8 +85,10 @@ return value:
 Desc:
 * Evict the LRU num_blks, # of blks.
 */
-ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames, size_t *blk_offsets);
+//ssize_t evict_blocks(sqlite3 *db, size_t num_blks, char **filenames, size_t *blk_offsets);
+ssize_t evict_blocks(sqlite3 *db, size_t num_blks, int *file_ids, char **filenames, size_t *blk_offsets);
 
+int get_filename_from_fileid(sqlite3 *db, int file_id, char **filename);
 /*
 Alternately to evict LRU file
 */
