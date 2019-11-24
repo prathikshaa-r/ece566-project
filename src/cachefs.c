@@ -47,6 +47,7 @@
 #include <sys/xattr.h>
 #endif
 
+#include <time.h>
 #include "log.h"
 #include "cacheHelp.h"
 #include "metadata/meta.h"
@@ -130,6 +131,12 @@ int cfs_getCacheattr(const char *path, struct stat *statbuf) {
   log_stat(statbuf);
 
   return retstat;
+}
+
+char* formatdate(char* str, time_t val)
+{
+        strftime(str, 36, "%d.%m.%Y %H:%M:%S", localtime(&val));
+        return str;
 }
 
 /** Read the target of a symbolic link
@@ -404,8 +411,11 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   //00- RD 01-WOnly 10-RW
   if((fi->flags & 0x3) == 1)//if write only, chang to read write
   {
-    nasFileDescriptor = log_syscall("NAS open", open(nasPath, O_RDWR), 0);
-  } 
+    int switchedFlag = fi->flags;
+    switchedFlag = switchedFlag & 8589934588;
+    switchedFlag = switchedFlag | 2;
+    nasFileDescriptor = log_syscall("NAS open", open(nasPath, switchedFlag), 0);
+  }
   else
   {
     nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);//
@@ -413,15 +423,31 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 
 
   bool presentInCache = false;
+  presentInCache = is_file_in_cache(metaDataBase, cacheFileName);
+
+  if(nasFileDescriptor < 0)//file was not present on remote server,if in local, delete 
+  {
+    if(presentInCache)
+    {
+      log_msg("\nCache file not present in NAS, deleting cache file...\n");
+      delete_file(metaDataBase, cacheFileName);//remove file from metadata file
+      log_syscall("Cache unlink", unlink(cachePath), 0);
+      presentInCache = false;
+    }    
+    return nasFileDescriptor;
+  }
+  
+
   struct stat nasFileInfo;
   cfs_getNASattr(path, &nasFileInfo);
-  presentInCache = false;//is_file_in_cache(metaDataBase, cacheFileName);// --Uncomment
 
-  struct stat cacheFileInfo;
   if(presentInCache)//check up to dateness 
   {
+    struct stat cacheFileInfo;
     cfs_getCacheattr(path, &cacheFileInfo);
-    if(cacheFileInfo.st_mtime < nasFileInfo.st_mtime)//NAS file has been modifed more recently, need to scrap data 
+    char nasDate[36], cacheDate[36];
+    log_msg("\nNAS mtime: %s | Cache mtime: %s\n", formatdate(nasDate, nasFileInfo.st_mtime), formatdate(cacheDate, cacheFileInfo.st_mtime));
+    if(cacheFileInfo.st_mtime < nasFileInfo.st_mtime)
     {
       log_msg("\nCache file is behind NAS, deleting cache file...\n");
       delete_file(metaDataBase, cacheFileName);//remove file from metadata file
@@ -460,7 +486,7 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
 //Specifically write to cache
 //Need for reads so that future reads can be from cache
 //Also called by cfs_write when the file is in cache, has same function
-int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+int cfs_cacheWrite(char *cacheFileName, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
   int retstat;
   char cachePath[PATH_MAX];
@@ -474,7 +500,26 @@ int cfs_cacheWrite(const char *cacheFileName, const char *buf, size_t size, off_
 
   log_fi(fi); 
 
-  return log_syscall("pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
+  //------------Metadata Adjustments for Write--------------// 
+  size_t number_blocks = size/block_size;
+  size_t offsetArray[number_blocks];
+  for(int block_index = 0; block_index < number_blocks; block_index++)
+  {
+    offsetArray[block_index] = offset+(block_index*block_size);
+  }
+
+  while(get_cache_used_size() >= cache_size*1024)//create space in cache through LRU evictions
+  {
+    log_msg("\nCache is full, evicting blocks...\n");
+    char* evictionFileNames[number_blocks];
+    size_t evictedOffsets[number_blocks];
+    //evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets); Uncomment when implemented 
+  }
+
+  write_blks(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray);
+  //------------End of Metadata Adjustments for Write--------------// 
+
+  return log_syscall("Cache pwrite", pwrite(dualFH->cacheFH, buf, size, offset), 0);
 }
 
 /** Read data from an open file
@@ -510,16 +555,26 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
 
   //Check our cache for if all data is present, otherwise write in all blocks (possibly repetitvely) then read
   //Sequential write speed prioritized, could be bad in case of long write that could be sped up through seeks
-  int number_blocks = alignedSize/block_size;
-  bool cacheBlockHitYN[number_blocks];
-  int offsetArray[number_blocks];
+  size_t number_blocks = alignedSize/block_size;
+  int cacheBlockHitYN[number_blocks];
+  size_t offsetArray[number_blocks];
   for(int cnt = 0; cnt<number_blocks; cnt++)
   {
     offsetArray[cnt] = lowerOffset+(block_size*cnt);
   }
 
+  char cacheFileName[PATH_MAX];
+  cfs_pathToFileName(cacheFileName, path);
   bool cacheDataHit = false;
-  //bool cacheDataHit = are_blocks_in_cache(cacheMeta, cacheFileName, number_blocks, offsetArray, cacheBlockHitYN); //Uncomment when implemented
+  int dataCheck = are_blocks_in_cache(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray, (int *)&cacheBlockHitYN); 
+  if(dataCheck < 0)
+  {
+    log_error("Error in are_blocks_in_cache");
+  } 
+  else
+  {
+    cacheDataHit = dataCheck;
+  }
 
   struct dualFileHandle *dualFH;
   dualFH = (struct dualFileHandle *)fi->fh;
@@ -534,16 +589,24 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
   // no need to get nasPath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
-  if(cacheDataHit == false)//need to write to cache for possible future reads
-  {
-    retstat = log_syscall("Data miss:nas pread plus fill cache", pread(dualFH->nasFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
-    char cacheFileName[PATH_MAX];
-    cfs_pathToFileName(cacheFileName, path);
-    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
-  }
-  else//data is present and can be read from cache
+  if(cacheDataHit)//have all necessary data in cache, read only from cache
   {
     retstat = log_syscall("Data hit:cache pread", pread(dualFH->cacheFH, cacheBuf, alignedSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+  }
+  else//go block by block, reading from nas and writing to cache for non present, reading from cache for present 
+  {
+    for(int block_index = 0; block_index < number_blocks; block_index++)
+    {
+      if(cacheBlockHitYN[block_index])//specific block is in cache, read from there
+      {
+        retstat = retstat + pread(dualFH->cacheFH, cacheBuf+(block_index*block_size), block_size, lowerOffset+(block_index*block_size));
+      }
+      else//specific block is not in cache, read from nas and write to cache for future reads
+      {
+        retstat = retstat + pread(dualFH->nasFH, cacheBuf+(block_index*block_size), block_size, lowerOffset+(block_index*block_size)); 
+        cfs_cacheWrite(cacheFileName, cacheBuf+(block_index*block_size), block_size, lowerOffset+(block_index*block_size), fi);
+      }
+    }
   }
   memcpy(buf, cacheBuf+offset-lowerOffset, size);//write to buffer the requested data (offset-lowerOffset will bump up cacheBuf to where the real data starts)
   free((void*)cacheBuf);
@@ -589,27 +652,22 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
   //---------------Cache Aspect of Writes---------------//
   struct stat nasAttr;
   cfs_getNASattr(path, &nasAttr);
-
-  //Check if file is present in cache, and if so write to it using cacheWrite
-  bool presentInCache = true;
-  //presentInCache = is_file_in_cache(cacheMeta, cacheFileName);// ---- Uncomment when implemented
-  if(presentInCache)//write to cachefor future reads
+  size_t nasReadSize = alignedSize;
+  if(nasReadSize+lowerOffset > nasAttr.st_size)
   {
-    char* cacheBuf = malloc(alignedSize*sizeof(char));
-    size_t nasReadSize = alignedSize;
-    if(nasReadSize+lowerOffset > nasAttr.st_size)
-    {
-      nasReadSize = nasAttr.st_size-lowerOffset;     
-    }
-    log_msg(
-        "\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
-        cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
-    log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
-    char cacheFileName[PATH_MAX];
-    cfs_pathToFileName(cacheFileName, path);
-    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads Uncomment when implemented
-    free((void*)cacheBuf);
+    nasReadSize = nasAttr.st_size-lowerOffset;     
   }
+
+  char* cacheBuf = malloc(alignedSize*sizeof(char));
+
+  log_msg("\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
+  cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
+  log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+
+  char cacheFileName[PATH_MAX];
+  cfs_pathToFileName(cacheFileName, path);
+  cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads 
+  free((void*)cacheBuf);
   return retstat;
 }
 
@@ -1259,24 +1317,7 @@ int main(int argc, char *argv[]) {
   {
     print_cache_used_size();
   }
-  // insert new file into metadata
-  create_file(metaDataBase, "newdir/hello/Hello.txt", 1234);
-  create_file(metaDataBase, "newdir/hello/Test2.txt", 1234);
-  // function to create datablock entry
-  if (VERBOSE)
-  {
-    printf("Calling insert block...\n");
-  }
-  insert_block(metaDataBase, "newdir/hello/Hello.txt", 1234);
-  insert_block(metaDataBase, "newdir/hello/Hello.txt", 1578);
 
-  insert_block(metaDataBase, "newdir/hello/Test2.txt", 1234);
-  insert_block(metaDataBase, "newdir/hello/Test2.txt", 1578);
-
-
-  // function to update remote file size- call on close() &|or open()
-
-  // function to update block timestamp
   /*-------------------Open Metadata Handle-------------------*/
 
   // turn over control to fuse

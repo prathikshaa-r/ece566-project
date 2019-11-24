@@ -5,7 +5,7 @@
 
 #include "meta.h"
 
-
+/*
 int main(void) {
   // printf("%s\n", sqlite3_libversion());
 
@@ -130,6 +130,7 @@ int main(void) {
 
   return EXIT_SUCCESS;
 }
+*/
 
 // LRU_block* init_lru_blk(){
 //   LRU_block *lru_block = malloc(sizeof(LRU_block));
