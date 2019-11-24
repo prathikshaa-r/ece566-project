@@ -513,7 +513,20 @@ int cfs_cacheWrite(char *cacheFileName, char *buf, size_t size, off_t offset, st
     log_msg("\nCache is full, evicting blocks...\n");
     char* evictionFileNames[number_blocks];
     size_t evictedOffsets[number_blocks];
-    //evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets); Uncomment when implemented 
+    /*evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets); Uncomment when implemented 
+    for(int evict_index = 0; evict_index < number_blocks; evict_index++)
+    {
+      char cachePath[PATH_MAX], fallocateCall[PATH_MAX];
+      cfs_fullCachePath(cachePath, evictionFileNames[evict_index]);
+
+      strcpy(fallocateCall,"fallocate -p ");
+      strncat(fallocateCall, cachePath, PATH_MAX);
+
+      log_msg("\nFallocate -p call: %s\n", fallocateCall);
+
+      log_syscall("Cache punching", system(fallocateCall), 0);
+    }
+    */
   }
 
   write_blks(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray);
