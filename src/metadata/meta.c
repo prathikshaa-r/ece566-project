@@ -828,6 +828,7 @@ int get_filename_from_fileid(sqlite3 *db, int file_id, char **filename){
     const char * filename_on_stack = (char *)sqlite3_column_text(stmt, 0);
     printf("Filename[%d]:%s\n", file_id, sqlite3_column_text(stmt, 0));
     *filename = (char *)malloc(sizeof(filename_on_stack));
+    printf("Malloced a var for filename of size %lu\n", sizeof(filename_on_stack));
     strcpy(*filename, filename_on_stack);
     printf("Filename variable after assigning sql column text: %s\n", *filename);
   }
