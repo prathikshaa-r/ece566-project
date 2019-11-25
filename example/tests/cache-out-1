@@ -13,9 +13,9 @@
 	             Vangel Bojaxhi, Ben England, Vikentsi Lapa,
 	             Alexey Skidanov, Sudhir Kumar.
 
-	Run began: Mon Nov 25 00:22:37 2019
+	Run began: Mon Nov 25 01:10:24 2019
 
-	Command line used: ../../iozone3_487/src/current/iozone -f mountdir/PERF-TEST-1 –azcR –b cache-out-1.xls
+	Command line used: ./iozone3_487/src/current/iozone -f mountdir/PERF-TEST-CACHE –azcR –b cache-out-1.xls
 	Output is in kBytes/sec
 	Time Resolution = 0.000001 seconds.
 	Processor cache size set to 1024 kBytes.
@@ -23,6 +23,6 @@
 	File stride size set to 17 * record size.
                                                               random    random     bkwd    record    stride                                    
               kB  reclen    write  rewrite    read    reread    read     write     read   rewrite      read   fwrite frewrite    fread  freread
-             512       4   423499   982467  2216629  1947291  1505098   826971  1550747    957072   1566585  1038532   990168  2081286  2141475
+             512       4      130      270    14132    18712    12964      253    11810       250     15042      227      272    16420    13979
 
 iozone test complete.
