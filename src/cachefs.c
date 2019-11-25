@@ -530,34 +530,42 @@ int cfs_cacheWrite(char *cacheFileName, char *buf, size_t size, off_t offset, st
     evict_blocks(metaDataBase, number_blocks, file_ids, evictionFileNames, evictedOffsets);
 
     log_msg("\nPast evict blocks...\n");
+    printf("Requesting %lu blocks to be evicted\n", number_blocks);
 
     // char* evictionFileNames[number_blocks];
     // size_t evictedOffsets[number_blocks];
     // evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets);  
-    for(int evict_index = 0; evict_index < number_blocks; evict_index++)
-    {
+    for(int evict_index = 0; evict_index < number_blocks; evict_index++){
       log_msg("\nEntered for...\n");
       char cachePath[PATH_MAX], fallocateCall[PATH_MAX];
+      printf("File to evict:%s:%lu\n", 
+        evictionFileNames[file_ids[evict_index]],
+        evictedOffsets[evict_index]);
       cfs_fullCachePath(cachePath, evictionFileNames[file_ids[evict_index]]);
 
       log_msg("\nAbout to copy...\n");
-      strcpy(fallocateCall,"fallocate -p ");
-      strncat(fallocateCall, cachePath, PATH_MAX);
+      // strcpy(fallocateCall,"fallocate -p ");
+      // strncat(fallocateCall, cachePath, PATH_MAX);
+
+      snprintf(fallocateCall, PATH_MAX, 
+        "fallocate -p -o %lu -l %lu -n %s", 
+          evictedOffsets[evict_index],
+          block_size,
+          cachePath);
 
       log_msg("\nFallocate -p call: %s\n", fallocateCall);
 
       log_syscall("Cache punching", system(fallocateCall), 0);
-
-      for (int i = 0; i < number_blocks; ++i){
-        if(evictionFileNames[i]){
-          free(evictionFileNames[i]);
-        }
-      }
-
-      free(evictionFileNames);
-      free(evictedOffsets);
-      free(file_ids);
     }
+   for (int i = 0; i < number_blocks; ++i){
+      if(evictionFileNames[i]){
+        free(evictionFileNames[i]);
+      }
+    }
+
+    free(evictionFileNames);
+    free(evictedOffsets);
+    free(file_ids);
   }
 
   write_blks(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray);
@@ -1306,11 +1314,11 @@ int main(int argc, char *argv[]) {
 
   sscanf(argv[argc-4], "%lu", &block_size);//set our block size
   argv[argc - 5] = argv[argc - 2];//put mountdir in first non null argv entry
-  argv[argc - 4] = NULL;
+  argv[argc - 4] = "-d";
   argv[argc - 3] = NULL;
   argv[argc - 2] = NULL;
   argv[argc - 1] = NULL;
-  argc = 2;
+  argc = 3;
   fprintf(stderr, "Nas Path %s\n", cfs_data->nasdir);
   fprintf(stderr, "Cache Path %s\n", cfs_data->cachedir);
   fprintf(stderr, "New cache size (Kb): %lu\n", cache_size);
