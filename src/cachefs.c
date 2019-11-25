@@ -662,14 +662,17 @@ int cfs_read(const char *path, char *buf, size_t size, off_t offset,
       {
         retstat = retstat + pread(dualFH->cacheFH, cacheBuf+(block_index*block_size), block_size, lowerOffset+(block_index*block_size));
       }
-      else//specific block is not in cache, read from nas and write to cache for future reads
-      {
+    }
+    for(int block_index = 0; block_index < number_blocks; block_index++)
+    {
+      if(!cacheBlockHitYN[block_index])//specific block is in cache, read from there
+      {//specific block is not in cache, read from nas and write to cache for future reads
         retstat = retstat + pread(dualFH->nasFH, cacheBuf+(block_index*block_size), block_size, lowerOffset+(block_index*block_size)); 
         cfs_cacheWrite(cacheFileName, cacheBuf+(block_index*block_size), block_size, lowerOffset+(block_index*block_size), fi);
       }
     }
   }
-  memcpy(buf, cacheBuf+offset-lowerOffset, size);//write to buffer the requested data (offset-lowerOffset will bump up cacheBuf to where the real data starts)
+  memcpy(buf, cacheBuf+offset-lowerOffset, size);
   free((void*)cacheBuf);
   return retstat;
 }
@@ -1323,11 +1326,11 @@ int main(int argc, char *argv[]) {
 
   sscanf(argv[argc-4], "%lu", &block_size);//set our block size
   argv[argc - 5] = argv[argc - 2];//put mountdir in first non null argv entry
-  argv[argc - 4] = "-d";
+  argv[argc - 4] = NULL;
   argv[argc - 3] = NULL;
   argv[argc - 2] = NULL;
   argv[argc - 1] = NULL;
-  argc = 3;
+  argc = 2;
   fprintf(stderr, "Nas Path %s\n", cfs_data->nasdir);
   fprintf(stderr, "Cache Path %s\n", cfs_data->cachedir);
   fprintf(stderr, "New cache size (Kb): %lu\n", cache_size);
