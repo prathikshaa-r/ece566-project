@@ -55,8 +55,8 @@
 sqlite3 *metaDataBase;
 
 //  All the paths I see are relative to the root of the mounted
-//  filesystem.  In order to get to the underlying filesystem, I need to
-//  have the mountpoint.  I'll save it away early on in main(), and then
+//  filesystem.  In order to get to the underlying NAS, I need to
+//  have the NAS root directory.  I'll save it away early on in main(), and then
 //  whenever I need a path for something I'll call this to construct
 //  it.
 static void cfs_fullNasPath(char nasPath[PATH_MAX], const char *path) {
@@ -68,6 +68,9 @@ static void cfs_fullNasPath(char nasPath[PATH_MAX], const char *path) {
           CFS_DATA->nasdir, path, nasPath);
 }
 
+
+//Similarly to fullNasPath, when I want to address cachefiles
+//I will append our relative path to the absolute path of the cache root directory
 static void cfs_fullCachePath(char cachePath[PATH_MAX], const char *path) {
   strcpy(cachePath, CFS_DATA->cachedir);
   strncat(cachePath, path, PATH_MAX); // ridiculously long paths will
@@ -77,6 +80,8 @@ static void cfs_fullCachePath(char cachePath[PATH_MAX], const char *path) {
           CFS_DATA->cachedir, path, cachePath);
 }
 
+//Cache files are stored as the relative paths in the NAS for uniqueness and so 
+//that calls to nonexistant cache directories are not a concern 
 static void cfs_pathToFileName(char pathFileName[PATH_MAX], const char *path) {
   strcpy(pathFileName, path);
 
@@ -117,6 +122,7 @@ int cfs_getNASattr(const char *path, struct stat *statbuf) {
   return retstat;
 }
 
+//Primarily used for getting modification times from cache files for coherency checks 
 int cfs_getCacheattr(const char *path, struct stat *statbuf) {
   int retstat = 0;
   char cacheFileName[PATH_MAX], cachePath[PATH_MAX];
@@ -133,6 +139,7 @@ int cfs_getCacheattr(const char *path, struct stat *statbuf) {
   return retstat;
 }
 
+//Used to print st_mtime in cfs_open
 char* formatdate(char* str, time_t val)
 {
         strftime(str, 36, "%d.%m.%Y %H:%M:%S", localtime(&val));
@@ -210,7 +217,9 @@ int cfs_mkdir(const char *path, mode_t mode) {
   return log_syscall("mkdir", mkdir(nasPath, mode), 0);
 }
 
-/** Remove a file */
+/** Remove a file from both the NAS Directory and Cache Directory
+    Calls to cache directory are expected to complete due to remove calls 
+    creating files in cache (ie open is called by rm*/
 int cfs_unlink(const char *path) {
   char nasPath[PATH_MAX];
   char cacheFileName[PATH_MAX];
@@ -226,7 +235,7 @@ int cfs_unlink(const char *path) {
   return log_syscall("NAS unlink", unlink(nasPath), 0);
 }
 
-/** Remove a directory */
+/** Remove a directory, only from NAS directory */
 int cfs_rmdir(const char *path) {
   char nasPath[PATH_MAX];
 
