@@ -189,6 +189,12 @@ int cfs_mknod(const char *path, mode_t mode, dev_t dev) {
   log_msg("\ncfs_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n", path, mode, dev);
   cfs_fullNasPath(nasPath, path);
 
+  if(mode == 0100000)
+  {
+    log_msg("\nChanging mode...\n");
+    mode = 0100666;
+  }
+
   // On Linux this could just be 'mknod(path, mode, dev)' but this
   // tries to be be more portable by honoring the quote in the Linux
   // mknod man page stating the only portable use of mknod() is to
@@ -429,6 +435,37 @@ int cfs_open(const char *path, struct fuse_file_info *fi) {
   {
     nasFileDescriptor = log_syscall("NAS open", open(nasPath, fi->flags), 0);//
   }
+
+  if(nasFileDescriptor == -1) {
+        if (errno == EACCES) {
+            struct stat stbuf;
+            int needmode;
+            
+            switch (fi->flags & O_ACCMODE) {
+            case O_RDONLY:
+                needmode = 0600;
+                break;
+
+            case O_WRONLY:
+                needmode = 0600;
+                break;
+                
+            default:
+                needmode = 0600;
+            }
+            
+            /* try changing permissions */
+            if (stat(nasPath, &stbuf) != -1 &&
+                chmod(nasPath, stbuf.st_mode | needmode) != -1)  {
+                nasFileDescriptor = open(nasPath, fi->flags);
+                chmod(nasPath, stbuf.st_mode);
+                if (nasFileDescriptor == -1)
+                    return -errno;
+            } else
+                return -EACCES;
+        } else
+            return -errno;
+    }
 
 
   bool presentInCache = false;
