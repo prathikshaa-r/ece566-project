@@ -777,6 +777,7 @@ ssize_t evict_blocks(sqlite3 *db, size_t num_blks, int *file_ids, char **filenam
       get_filename_from_fileid(db, file_ids[row], (char **)&filenames[file_ids[row]]);
     }
     if(VERBOSE) printf("\tBlock Offset: %lu\tFile ID: %d\n", blk_offsets[row], file_ids[row]);
+    if(VERBOSE) printf("%s\n", filenames[file_ids[row]]);
     row++; // track row number
   }
 
