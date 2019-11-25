@@ -1,2 +1,2 @@
 #/bin/bash
-mount esa05.egr.duke.edu:/home/localadmin/serverShare nasdir/
+mount 10.148.54.30:/home/localadmin/serverShare nasdir/
