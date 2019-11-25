@@ -511,22 +511,53 @@ int cfs_cacheWrite(char *cacheFileName, char *buf, size_t size, off_t offset, st
   while(get_cache_used_size() >= cache_size*1024)//create space in cache through LRU evictions
   {
     log_msg("\nCache is full, evicting blocks...\n");
-    char* evictionFileNames[number_blocks];
-    size_t evictedOffsets[number_blocks];
-    /*evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets); Uncomment when implemented 
+
+    char **evictionFileNames;
+    size_t *evictedOffsets;
+    int *file_ids;
+
+    evictionFileNames = (char **)malloc(sizeof(*evictionFileNames)*number_blocks);
+    memset(evictionFileNames, 0, sizeof(*evictionFileNames)*number_blocks);
+
+    evictedOffsets = (size_t *)malloc(sizeof(*evictedOffsets)*number_blocks);
+    memset(evictedOffsets, 0, sizeof(*evictedOffsets)*number_blocks);
+
+    file_ids = (int*)malloc(sizeof(*file_ids)*number_blocks);
+    memset(file_ids, 0, sizeof(*file_ids)*number_blocks);
+
+    log_msg("\nAbout to evict...\n");
+
+    evict_blocks(metaDataBase, number_blocks, file_ids, evictionFileNames, evictedOffsets);
+
+    log_msg("\nPast evict blocks...\n");
+
+    // char* evictionFileNames[number_blocks];
+    // size_t evictedOffsets[number_blocks];
+    // evict_blocks(metaDataBase, number_blocks, (char**)&evictionFileNames, (size_t*)&evictedOffsets);  
     for(int evict_index = 0; evict_index < number_blocks; evict_index++)
     {
+      log_msg("\nEntered for...\n");
       char cachePath[PATH_MAX], fallocateCall[PATH_MAX];
-      cfs_fullCachePath(cachePath, evictionFileNames[evict_index]);
+      cfs_fullCachePath(cachePath, evictionFileNames[file_ids[evict_index]]);
 
+      log_msg("\nAbout to copy...\n");
       strcpy(fallocateCall,"fallocate -p ");
       strncat(fallocateCall, cachePath, PATH_MAX);
 
       log_msg("\nFallocate -p call: %s\n", fallocateCall);
 
       log_syscall("Cache punching", system(fallocateCall), 0);
+
+      for (int i = 0; i < number_blocks; ++i){
+        if(evictionFileNames[i]){
+          free(evictionFileNames[i]);
+        }
+      }
+
+      free(evictionFileNames);
+      free(evictedOffsets);
+      free(file_ids);
     }
-    */
   }
 
   write_blks(metaDataBase, cacheFileName, number_blocks, (size_t *)&offsetArray);
@@ -1311,11 +1342,6 @@ int main(int argc, char *argv[]) {
   int ret = create_tables(metaDataBase);
   if((VERBOSE)&&(ret ==-1)){
     printf("Tables probably exist already!\n");
-  }
-
-  if(VERBOSE)
-  {
-    printf("Initializing LRU block...\n");
   }
 
   set_block_size(block_size);
