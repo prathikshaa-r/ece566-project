@@ -13,7 +13,7 @@
 	             Vangel Bojaxhi, Ben England, Vikentsi Lapa,
 	             Alexey Skidanov, Sudhir Kumar.
 
-	Run began: Mon Nov 25 00:22:35 2019
+	Run began: Mon Nov 25 00:35:29 2019
 
 	Command line used: ../../iozone3_487/src/current/iozone -f nasdir/PERF-TEST –azcR –b nas-out-4.xls
 	Output is in kBytes/sec
@@ -23,6 +23,6 @@
 	File stride size set to 17 * record size.
                                                               random    random     bkwd    record    stride                                    
               kB  reclen    write  rewrite    read    reread    read     write     read   rewrite      read   fwrite frewrite    fread  freread
-             512       4  1201856  1429934  2327124  2047551   645703   466255   634448    566348    632020  1472083  1354190  2337255  2337255
+             512       4  1001715   602412  1764853  1546280  1347393  1017858  1218910   1227971   1336492  1276891  1199171  1605228  1924603
 
 iozone test complete.

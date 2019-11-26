@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 		timerEnd = clock();
 		cpuTimeUsed = ((double)(timerEnd-timerStart)) / CLOCKS_PER_SEC;
 
-		fprintf(stderr, "Write to file %d took %f seconds\n", write_index, cpuTimeUsed);
+		fprintf(stderr, "Write to file %d took %lf milliseconds\n", write_index, cpuTimeUsed*1000);
 
 		{
       		fclose(filePointers[write_index]);
@@ -139,11 +139,12 @@ int main(int argc, char *argv[])
 		timerEnd = clock();
 		cpuTimeUsed = ((double)(timerEnd-timerStart)) / CLOCKS_PER_SEC;
 
-		fprintf(stderr, "Read to file %d took %f seconds\n", read_index, cpuTimeUsed);
+		fprintf(stderr, "Read to file %d took %f milliseconds\n", read_index, cpuTimeUsed*1000);
 
 		{
       		fclose(filePointers[read_index]);
    		}
 	}
+
 	return 0;
 }
