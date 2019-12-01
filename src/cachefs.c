@@ -759,16 +759,24 @@ int cfs_write(const char *path, const char *buf, size_t size, off_t offset,
     nasReadSize = nasAttr.st_size-lowerOffset;     
   }
 
-  char* cacheBuf = malloc(alignedSize*sizeof(char));
-
-  log_msg("\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
-  cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
-  log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
-
   char cacheFileName[PATH_MAX];
   cfs_pathToFileName(cacheFileName, path);
-  cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads 
-  free((void*)cacheBuf);
+
+  if(alignedSize != size || lowerOffset != offset || upperOffset != offset+size)
+  {
+    char* cacheBuf;
+    cacheBuf = malloc(alignedSize*sizeof(char));
+    log_msg("\nNAS Read for Cache Write(buf=0x%08x, size=%d, offset=%lld, fi=0x%08x, nasFH = 0x % 016llx)\n",
+    cacheBuf, nasReadSize, lowerOffset, fi, dualFH->nasFH);
+    log_syscall("Reading for write to cache", pread(dualFH->nasFH, cacheBuf, nasReadSize, lowerOffset), 0);//do the possibly enlarged read from the NAS
+    cfs_cacheWrite(cacheFileName, cacheBuf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads 
+    free((void*)cacheBuf);
+  }
+  else
+  {
+    cfs_cacheWrite(cacheFileName, (char*)buf, alignedSize, lowerOffset, fi);// write our new data to cache for future reads 
+  }
+
   return retstat;
 }
 

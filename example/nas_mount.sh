@@ -1,2 +1,2 @@
 #/bin/bash
-mount 10.148.54.30:/home/localadmin/serverShare nasdir/
+mount -o sync 10.148.54.30:/home/localadmin/serverShare nasdir/
